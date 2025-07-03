@@ -83,3 +83,25 @@ internal fun List<Int>.toDrawableAmplitudes(
     }.normalize(minHeight, maxHeight)
         .map { it.times(multiplier).coerceIn(minHeight, maxHeight) }
 }
+
+
+
+internal fun List<Float>.normalized(max: Float, min: Float, lMax: Float): List<Float> {
+    val lMin = this.min()
+
+    // If the list min == max, then return as it is
+    if (lMax == lMin) return this
+
+    /*
+     * y = mx + c
+     * m = (y2-y1) / (x2 - x1)
+     */
+    val slope = (max - min) / (lMax - lMin)
+    val yIntercept = max - (slope * lMax)
+
+    val y: (Float) -> Float = { x ->
+        slope * x + yIntercept + 1f
+    }
+
+    return map(y)
+}
