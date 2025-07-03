@@ -41,6 +41,7 @@ android {
 
 dependencies {
     implementation(project(":waveform"))
+    implementation(files("../libs/amplituda.aar"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

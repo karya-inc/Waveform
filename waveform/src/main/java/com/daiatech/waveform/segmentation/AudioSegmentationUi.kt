@@ -5,7 +5,6 @@ import android.os.Looper
 import android.view.MotionEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -30,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -51,10 +51,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.media3.common.MediaItem
@@ -65,7 +68,6 @@ import com.daiatech.waveform.AudioPlayer
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.R
-import com.daiatech.waveform.markerColor
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.touchTargetSize
 import kotlinx.coroutines.CoroutineScope
@@ -83,6 +85,7 @@ private val TEXT_HEIGHT_PADDING = 12.dp
 fun AudioSegmentationUi(
     modifier: Modifier = Modifier,
     state: SegmentationState,
+    colors: SegmentationColors = segmentationColors(),
     markersCount: Int = 10,
     addSegmentText: String = "+ Add",
     removeSegmentText: String = "- Remove",
@@ -95,8 +98,8 @@ fun AudioSegmentationUi(
     val coroutineScope = rememberCoroutineScope()
 
     val textMeasurer = rememberTextMeasurer()
-    val textStyle = remember { TextStyle(fontSize = 12.sp, color = Color.Black) }
-    val textStyle1 = remember { TextStyle(fontSize = 12.sp, color = Color(0xFF02FF00)) }
+    val textStyle = remember { TextStyle(fontSize = 12.sp, color = colors.windowTextColor) }
+    val markersTextStyle = remember { TextStyle(fontSize = 12.sp, color = colors.markerColor) }
     val textMeasure1 = remember { textMeasurer.measure("1", textStyle) }
     val textMeasure2 = remember { textMeasurer.measure("2", textStyle) }
 
@@ -185,6 +188,7 @@ fun AudioSegmentationUi(
 
     Column(
         modifier
+            .background(colors.containerColor)
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
     ) {
@@ -228,7 +232,7 @@ fun AudioSegmentationUi(
             // Main Waveform for entire audio
             state.spikeAmplitude.value.forEachIndexed { index, amplitude ->
                 drawRoundRect(
-                    brush = state.waveformBrush,
+                    brush = SolidColor(colors.waveformColor),
                     topLeft = Offset(
                         x = index * state.spikeTotalWidth.toPx(),
                         y = when (state.waveformAlignment) {
@@ -253,7 +257,7 @@ fun AudioSegmentationUi(
                     val xEnd = size.width / durationMs.toFloat() * segment.end
                     // draw a window from xStart to xEnd
                     drawRoundRect(
-                        brush = SolidColor(Color.White.copy(0.5F)),
+                        brush = SolidColor(colors.inactiveWindowColor),
                         topLeft = Offset(xStart, 0F),
                         size = Size(xEnd - xStart, size.height),
                         style = Stroke(width = state.spikeWidth.toPx())
@@ -269,7 +273,7 @@ fun AudioSegmentationUi(
 
                 // draw a window from xStart to xEnd
                 drawRoundRect(
-                    brush = state.markerBrush,
+                    brush = SolidColor(colors.activeWindowColor),
                     topLeft = Offset(xStart, 0F),
                     size = Size(xEnd - xStart, size.height),
                     style = Stroke(width = state.spikeWidth.toPx())
@@ -279,7 +283,7 @@ fun AudioSegmentationUi(
                 drawCircle(
                     center = Offset(xStart, size.height / 2),
                     radius = 8.dp.toPx(),
-                    brush = state.markerBrush
+                    brush = SolidColor(colors.activeWindowColor)
                 )
                 drawText(
                     textMeasurer = textMeasurer,
@@ -299,7 +303,7 @@ fun AudioSegmentationUi(
                 drawCircle(
                     center = Offset(xEnd, size.height / 2),
                     radius = 8.dp.toPx(),
-                    brush = state.markerBrush
+                    brush = SolidColor(colors.activeWindowColor)
                 )
                 drawText(
                     textMeasurer = textMeasurer,
@@ -336,7 +340,7 @@ fun AudioSegmentationUi(
             if (segmentPlaybackProgress != 0L) {
                 val xCoordinate = state.durationToPx(segmentPlaybackProgress)
                 drawLine(
-                    brush = state.progressBrush,
+                    brush = SolidColor(colors.secondaryProgressColor),
                     start = Offset(xCoordinate, size.height.times(0.2f)),
                     end = Offset(xCoordinate, size.height.times(0.8f)),
                     strokeWidth = state.spikeWidth.toPx(),
@@ -348,7 +352,7 @@ fun AudioSegmentationUi(
             if (topPlayerProgress != 0L) {
                 val xCoordinate = state.durationToPx(topPlayerProgress)
                 drawLine(
-                    brush = SolidColor(Color.Red),
+                    brush = SolidColor(colors.primaryProgressColor),
                     start = Offset(xCoordinate, 0F),
                     end = Offset(xCoordinate, size.height),
                     strokeWidth = state.progressBarWidth.toPx(),
@@ -387,7 +391,7 @@ fun AudioSegmentationUi(
                     state.activeSegment.value?.let { segIdx ->
                         state.zoomedInAmplitudes.value.forEachIndexed { index, amplitude ->
                             drawRoundRect(
-                                brush = state.waveformBrush,
+                                brush = SolidColor(colors.waveformColor),
                                 topLeft = Offset(
                                     x = index * state.spikeTotalWidth.toPx(),
                                     y = when (state.waveformAlignment) {
@@ -417,7 +421,7 @@ fun AudioSegmentationUi(
                                 val xCoordinate = state.durationToPx(time, seg.start, seg.end)
 
                                 drawLine(
-                                    brush = SolidColor(markerColor),
+                                    brush = SolidColor(colors.markerColor),
                                     start = Offset(xCoordinate, TEXT_HEIGHT_PADDING.toPx()),
                                     end = Offset(xCoordinate, size.height),
                                     strokeWidth = state.spikeWidth.toPx(),
@@ -425,7 +429,7 @@ fun AudioSegmentationUi(
                                 )
                                 val tm = textMeasurer.measure(
                                     text = timeString,
-                                    style = textStyle1
+                                    style = markersTextStyle
                                 )
 
                                 val x = when (t) {
@@ -437,7 +441,7 @@ fun AudioSegmentationUi(
 
                                 drawText(
                                     textMeasurer = textMeasurer,
-                                    style = TextStyle(fontSize = 12.sp, color = markerColor),
+                                    style = markersTextStyle,
                                     text = timeString,
                                     topLeft = Offset(x, y),
                                     size = Size(
@@ -456,7 +460,7 @@ fun AudioSegmentationUi(
                             activeSegment?.end
                         )
                         drawLine(
-                            brush = state.progressBrush,
+                            brush = SolidColor(colors.secondaryProgressColor),
                             start = Offset(xCoordinate, TEXT_HEIGHT_PADDING.toPx()),
                             end = Offset(xCoordinate, size.height),
                             strokeWidth = state.progressBarWidth.toPx(),
@@ -485,20 +489,19 @@ fun AudioSegmentationUi(
                                     }
                                     .padding(8.dp)
                             ) {
-                                Image(
+                                Icon(
                                     painter = painterResource(
                                         id = R.drawable.ic_arrow_left
                                     ),
                                     contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = colors.buttonColor
                                 )
                             }
-                            Image(
-                                painter = painterResource(
-                                    id = R.drawable.marker_1
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
+                            WindowMarker(
+                                text = "1",
+                                containerColor = colors.activeWindowColor,
+                                contentColor = colors.windowTextColor
                             )
                             Box(
                                 modifier = Modifier
@@ -509,12 +512,13 @@ fun AudioSegmentationUi(
                                     }
                                     .padding(8.dp)
                             ) {
-                                Image(
+                                Icon(
                                     painter = painterResource(
                                         id = R.drawable.ic_arrow_right
                                     ),
                                     contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = colors.buttonColor
                                 )
                             }
                         }
@@ -524,7 +528,7 @@ fun AudioSegmentationUi(
                                 ?.start?.let(::toSecsAndMs)
                         Text(
                             text = "${start}s",
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = colors.buttonColor,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -567,7 +571,7 @@ fun AudioSegmentationUi(
                             Icon(
                                 painter = painterResource(id = res),
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = colors.buttonColor
                             )
                         }
                         val progress =
@@ -581,7 +585,7 @@ fun AudioSegmentationUi(
                             } ?: ""
                         Text(
                             text = progress,
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = colors.buttonColor,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -596,20 +600,19 @@ fun AudioSegmentationUi(
                                     }
                                     .padding(8.dp)
                             ) {
-                                Image(
+                                Icon(
                                     painter = painterResource(
                                         id = R.drawable.ic_arrow_left
                                     ),
                                     contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = colors.buttonColor
                                 )
                             }
-                            Image(
-                                painter = painterResource(
-                                    id = R.drawable.marker_2
-                                ),
-                                contentDescription = null,
-                                modifier = Modifier.size(32.dp)
+                            WindowMarker(
+                                text = "2",
+                                containerColor = colors.activeWindowColor,
+                                contentColor = colors.windowTextColor
                             )
                             Box(
                                 modifier = Modifier
@@ -620,12 +623,13 @@ fun AudioSegmentationUi(
                                     }
                                     .padding(8.dp)
                             ) {
-                                Image(
+                                Icon(
                                     painter = painterResource(
                                         id = R.drawable.ic_arrow_right
                                     ),
                                     contentDescription = null,
-                                    modifier = Modifier.size(24.dp)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = colors.buttonColor
                                 )
                             }
                         }
@@ -634,7 +638,7 @@ fun AudioSegmentationUi(
                             ?.end?.let(::toSecsAndMs)
                         Text(
                             text = "${end}s",
-                            color = MaterialTheme.colorScheme.onPrimary,
+                            color = colors.buttonColor,
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
@@ -657,12 +661,11 @@ fun AudioSegmentationUi(
                 alignment = Alignment.CenterHorizontally
             )
         ) {
-            val zoomButtonTint =
-                if (enableSpikeAmplification) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    Color.White.copy(0.4f)
-                }
+            val zoomButtonTint = if (enableSpikeAmplification) {
+                colors.buttonColor
+            } else {
+                colors.buttonColor.copy(0.4F)
+            }
 
             OutlinedButton(
                 onClick = { enableSpikeAmplification = !enableSpikeAmplification },
@@ -761,6 +764,49 @@ fun AudioSegmentationUi(
     }
 }
 
+@Composable
+fun WindowMarker(
+    modifier: Modifier = Modifier,
+    text: String,
+    containerColor: Color,
+    contentColor: Color
+) {
+    val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
+    val textStyle = remember { TextStyle(fontSize = 8.sp, color = contentColor) }
+    val tm = remember { textMeasurer.measure(text, textStyle) }
+    val tmSizeDp by derivedStateOf {
+        with(density) {
+            DpSize(
+                width = tm.size.width.toDp(),
+                height = tm.size.height.toDp()
+            )
+        }
+    }
+    Box(
+        modifier = modifier.size(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            painter = painterResource(id = R.drawable.marker_2),
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+            tint = containerColor
+        )
+        Canvas(Modifier.size(tmSizeDp)) {
+            drawText(
+                textMeasurer = textMeasurer,
+                style = textStyle,
+                text = text,
+                size = Size(
+                    width = tm.size.width.toFloat(),
+                    height = tm.size.height.toFloat()
+                )
+            )
+        }
+    }
+}
+
 /**
  * Captures pointer input.
  * On Long press and hold, calls onChange continuously with a delay of 10ms until click is released
@@ -799,4 +845,14 @@ private fun toSecsAndMs(milliseconds: Long): String {
     val ms = milliseconds % 1000
     val time = secs + ms / 1000.0
     return String.format(Locale.ROOT, "%.2f", time)
+}
+
+@Preview
+@Composable
+private fun WindowMarkerPrev() {
+    WindowMarker(
+        text = "2",
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary
+    )
 }

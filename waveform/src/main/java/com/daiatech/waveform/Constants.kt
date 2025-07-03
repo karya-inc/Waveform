@@ -1,6 +1,5 @@
 package com.daiatech.waveform
 
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -28,5 +27,3 @@ internal const val ON_TAP_ADJUSTMENT_MS = 10
 internal const val ON_LONG_TAP_ADJUSTMENT_MS = 50
 
 const val AUDIO_PLAYER_REFRESH_RATE_MS = 10L
-
-internal val markerColor = Color(0xFF02FF00).copy(0.4f)

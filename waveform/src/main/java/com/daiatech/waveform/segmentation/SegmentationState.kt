@@ -8,9 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -40,20 +37,17 @@ class SegmentationState(
     val audioFilePath: String,
     val durationMs: Long,
     val amplitudes: List<Int>,
-    initialSegments: List<Segment> = listOf(),
     val enableAdjustment: Boolean,
     val graphHeight: Dp,
     val style: DrawStyle,
-    val waveformBrush: Brush,
-    val progressBrush: Brush,
-    val markerBrush: Brush,
     val waveformAlignment: WaveformAlignment,
     val amplitudeType: AmplitudeType,
     spikeWidth: Dp,
     spikeRadius: Dp,
     spikePadding: Dp,
     minimumSegmentDuration: Long,
-    maximumSegmentDuration: Long
+    maximumSegmentDuration: Long,
+    initialSegments: List<Segment> = listOf(),
 ) {
 
     var canvasSize: Size = Size.Zero
@@ -69,11 +63,11 @@ class SegmentationState(
 
     private val _segments = mutableStateListOf(
         *(
-            initialSegments.filter {
-                // Remove the segments which are less than minimum duration
-                it.end - it.start >= minimumSegmentDuration
-            }
-            ).toTypedArray()
+                initialSegments.filter {
+                    // Remove the segments which are less than minimum duration
+                    it.end - it.start >= minimumSegmentDuration
+                }
+                ).toTypedArray()
     )
     val segments: SnapshotStateList<Segment> = _segments
 
@@ -389,40 +383,34 @@ fun rememberAudioSegmentationState(
     audioFilePath: String,
     durationMs: Long,
     amplitudes: List<Int>,
-    initialSegments: List<Segment> = listOf(),
     enableAdjustment: Boolean,
     graphHeight: Dp = MIN_GRAPH_HEIGHT,
     style: DrawStyle = Fill,
-    waveformBrush: Brush = SolidColor(Color.White),
-    progressBrush: Brush = SolidColor(Color.Cyan),
-    markerBrush: Brush = SolidColor(Color.Green),
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
     amplitudeType: AmplitudeType = AmplitudeType.MAX,
     spikeWidth: Dp = 2.dp,
     spikeRadius: Dp = 2.dp,
     spikePadding: Dp = 1.dp,
     minimumSegmentDuration: Long = 1000,
-    maximumSegmentDuration: Long = 15000
+    maximumSegmentDuration: Long = 15000,
+    initialSegments: List<Segment> = listOf()
 ): SegmentationState {
     return remember(key) {
         SegmentationState(
-            audioFilePath,
-            durationMs,
-            amplitudes,
-            initialSegments,
-            enableAdjustment,
-            graphHeight,
-            style,
-            waveformBrush,
-            progressBrush,
-            markerBrush,
-            waveformAlignment,
-            amplitudeType,
-            spikeWidth,
-            spikeRadius,
-            spikePadding,
-            minimumSegmentDuration,
-            maximumSegmentDuration
+            audioFilePath = audioFilePath,
+            durationMs = durationMs,
+            amplitudes = amplitudes,
+            enableAdjustment = enableAdjustment,
+            graphHeight = graphHeight,
+            style = style,
+            waveformAlignment = waveformAlignment,
+            amplitudeType = amplitudeType,
+            spikeWidth = spikeWidth,
+            spikeRadius = spikeRadius,
+            spikePadding = spikePadding,
+            minimumSegmentDuration = minimumSegmentDuration,
+            maximumSegmentDuration = maximumSegmentDuration,
+            initialSegments = initialSegments
         )
     }
 }
