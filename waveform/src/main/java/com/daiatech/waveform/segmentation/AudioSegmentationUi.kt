@@ -69,6 +69,7 @@ import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.R
 import com.daiatech.waveform.models.WaveformAlignment
+import com.daiatech.waveform.toSecsAndMs
 import com.daiatech.waveform.touchTargetSize
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -79,7 +80,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.ranges.coerceIn
 
-private val TEXT_HEIGHT_PADDING = 12.dp
+internal val TEXT_HEIGHT_PADDING = 12.dp
 
 @Composable
 fun AudioSegmentationUi(
@@ -840,12 +841,6 @@ fun Modifier.changeSegmentPosition(
     )
 }
 
-private fun toSecsAndMs(milliseconds: Long): String {
-    val secs = milliseconds / 1000
-    val ms = milliseconds % 1000
-    val time = secs + ms / 1000.0
-    return String.format(Locale.ROOT, "%.2f", time)
-}
 
 @Preview
 @Composable

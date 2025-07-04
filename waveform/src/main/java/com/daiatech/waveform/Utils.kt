@@ -2,6 +2,7 @@ package com.daiatech.waveform
 
 import androidx.compose.ui.geometry.Offset
 import com.daiatech.waveform.models.AmplitudeType
+import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -104,4 +105,12 @@ internal fun List<Float>.normalized(max: Float, min: Float, lMax: Float): List<F
     }
 
     return map(y)
+}
+
+
+internal fun toSecsAndMs(milliseconds: Long): String {
+    val secs = milliseconds / 1000
+    val ms = milliseconds % 1000
+    val time = secs + ms / 1000.0
+    return String.format(Locale.ROOT, "%.2f", time)
 }
