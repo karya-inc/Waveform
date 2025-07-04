@@ -3,7 +3,6 @@ package com.daiatech.waveform.segmetation2
 import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,16 +15,15 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.text.TextStyle
@@ -40,6 +38,7 @@ import com.daiatech.waveform.segmentation.end
 import com.daiatech.waveform.segmentation.start
 import com.daiatech.waveform.toSecsAndMs
 import com.daiatech.waveform.touchTargetSize
+import kotlinx.coroutines.launch
 
 /**
  * This component enables workers to pick a segment of audio
@@ -54,6 +53,7 @@ fun AudioSegmentPicker(
     markersCount: Int = 10
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val coroutineScope = rememberCoroutineScope()
     val textStyle = remember { TextStyle(fontSize = 12.sp, color = colors.windowTextColor) }
     val markersTextStyle = remember { TextStyle(fontSize = 12.sp, color = colors.markerColor) }
     val textMeasure1 = remember { textMeasurer.measure("1", textStyle) }
@@ -69,31 +69,24 @@ fun AudioSegmentPicker(
     }
     LaunchedEffect(
         state,
-        state.segment.value,
+        state.window.value,
         spikes,
         spikesMultiplier,
     ) {
         state.computeZoomedInDrawableAmplitudes(spikes, spikesMultiplier)
     }
 
-    Column {
+    Column(modifier) {
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(state.graphHeight)
                 .pointerInput(state.audioFilePath) {
-                    detectTapGestures(
-                        onLongPress = state::onLongPress,
-                        onTap = {
-                            // FIXME: if (exoPlayer.isPlaying) exoPlayer.stop()
-                            state.onTap(it)
-                        }
-                    )
-                }
-                .pointerInput(state.audioFilePath) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
-                            state.onHorizontalDrag(change, dragAmount, touchTargetSize.toPx())
+                            coroutineScope.launch {
+                                state.onWindowDrag(change, dragAmount, touchTargetSize.toPx())
+                            }
                         }
                     )
                 }
@@ -147,7 +140,7 @@ fun AudioSegmentPicker(
             }
 
             // Highlighted Segment boundary
-            state.segment.value.let { segment ->
+            state.window.value.let { segment ->
                 val xStart = size.width / state.durationMs.toFloat() * segment.start
                 val xEnd = size.width / state.durationMs.toFloat() * segment.end
 
@@ -211,13 +204,6 @@ fun AudioSegmentPicker(
                         MotionEvent.ACTION_DOWN,
                         MotionEvent.ACTION_MOVE -> {
                             if (it.x in 0F..canvasSize.width) {
-                                /*
-                                val seekPosition = state.pxToDuration(
-                                    it.x,
-                                    activeSegment?.start,
-                                    activeSegment?.end
-                                ) */
-                                // FIXME: exoPlayer.seekTo(seekPosition)
                                 true
                             } else {
                                 false
@@ -253,7 +239,7 @@ fun AudioSegmentPicker(
             }
 
             // draw lines every 10ms
-            state.segment.value.let { seg ->
+            state.window.value.let { seg ->
                 val duration = seg.end - seg.start
                 (0..markersCount).forEach { t ->
                     val time = seg.start + duration / markersCount * t
@@ -295,8 +281,8 @@ fun AudioSegmentPicker(
             if (segmentPlaybackProgress != 0L) {
                 val xCoordinate = state.durationToPx(
                     segmentPlaybackProgress,
-                    state.segment.value.start,
-                    state.segment.value.end
+                    state.window.value.start,
+                    state.window.value.end
                 )
                 drawLine(
                     brush = SolidColor(colors.secondaryProgressColor),
@@ -312,29 +298,14 @@ fun AudioSegmentPicker(
     }
 }
 
-
-@Composable
-fun SegmentationActions(
-    modifier: Modifier = Modifier,
-    addSegmentText: String = "+ Add",
-    removeSegmentText: String = "- Remove",
-    undoText: String = "Undo",
-    redoText: String = "Redo",
-    mergeText: String = "Merge",
-    clearAllText: String = "Clear All"
-) {
-
-}
-
 @Preview
 @Composable
 private fun AudioSegmentationUi2Prev() {
     Surface {
-        val state = rememberAudioSegmentationState(
+        val state = rememberAudioSegmentPickerState(
             audioFilePath = "",
             durationMs = 500,
             amplitudes = listOf(200, 300, 500, 1000, 10, 20, 90, 100, 114, 23, 20, 18),
-            enableAdjustment = true,
             segment = Segment(9, 200),
             window = Segment(40, 300)
         )
@@ -344,5 +315,4 @@ private fun AudioSegmentationUi2Prev() {
             segmentPlaybackProgress = 20
         )
     }
-
 }

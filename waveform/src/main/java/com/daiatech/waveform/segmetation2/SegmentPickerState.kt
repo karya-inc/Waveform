@@ -27,6 +27,8 @@ import com.daiatech.waveform.minSpikeWidthDp
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.normalize
+import com.daiatech.waveform.segmentation.end
+import com.daiatech.waveform.segmentation.start
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
@@ -50,6 +52,7 @@ class SegmentPickerState(
     segment: Segment,
 ) {
 
+    val minimumWindowDuration = 500
     var canvasSize: Size = Size.Zero
     val spikeWidth = spikeWidth.coerceIn(minSpikeWidthDp, maxSpikeWidthDp)
     val progressBarWidth = spikeWidth.times(2f)
@@ -61,8 +64,8 @@ class SegmentPickerState(
 
     /***************************  UI States   *****************************/
 
-    private val _segment = mutableStateOf(segment)
-    val segment: State<Segment> = _segment
+//    private val _segment = mutableStateOf(segment)
+//    val segment: State<Segment> = _segment
 
     private val _window = mutableStateOf(window)
     val window: State<Segment> = _window
@@ -93,16 +96,15 @@ class SegmentPickerState(
         spikesMultiplier: Float
     ) = withContext(Dispatchers.Default) {
         val maxHeight = canvasSize.height.coerceAtLeast(MIN_SPIKE_HEIGHT)
-        val zoomedInAmps = window.value.let { segment ->
-            val viewStartMs = (segment.start).coerceAtLeast(0)
-            val viewEndMs = (segment.end).coerceAtMost(durationMs)
-            val startIdx =
-                (amplitudes.size.toFloat() / durationMs.toFloat() * viewStartMs.toFloat()).toInt()
-                    .coerceIn(0, amplitudes.size)
-            val endIdx =
-                (amplitudes.size.toFloat() / durationMs.toFloat() * viewEndMs.toFloat()).toInt()
-                    .coerceIn(0, amplitudes.size)
-
+        val zoomedInAmps = window.value.let { window ->
+            val viewStartMs = (window.start).coerceAtLeast(0)
+            val viewEndMs = (window.end).coerceAtMost(durationMs)
+            val startIdx = (amplitudes.size.toFloat() / durationMs.toFloat()
+                    * viewStartMs.toFloat()).toInt()
+                .coerceIn(0, amplitudes.size)
+            val endIdx = (amplitudes.size.toFloat() / durationMs.toFloat()
+                    * viewEndMs.toFloat()).toInt()
+                .coerceIn(0, amplitudes.size)
             amplitudes.subList(startIdx, endIdx).toDrawableAmplitudes(
                 amplitudeType = amplitudeType,
                 spikes = spikes,
@@ -139,39 +141,30 @@ class SegmentPickerState(
             .map { it.times(multiplier).coerceIn(minHeight, maxHeight) }
     }
 
-    private val _groupedSegments = mutableStateListOf<Int>()
-    val groupedSegments: SnapshotStateList<Int> = _groupedSegments
-
-    private val _undoList = mutableStateListOf<List<Segment>>()
-    val undoList: SnapshotStateList<List<Segment>> = _undoList
-
-    private val _redoList = mutableStateListOf<List<Segment>>()
-    val redoList: SnapshotStateList<List<Segment>> = _redoList
-
     /***************************  UI States   *****************************/
 
     /***************************  UI INTERACTIONS   *****************************/
-    fun addToStart(by: Int) {
-        segment.value.let { segment ->
-            val newXStart = (segment.start + by)
-                .coerceIn(
-                    max(0, segment.end - maximumSegmentDuration),
-                    segment.end - minimumSegmentDuration
-                )
-            _segment.value = Segment(newXStart, segment.end)
-        }
-    }
-
-    fun addToEnd(by: Int) {
-        segment.value.let { segment ->
-            val newXEnd = (segment.end + by)
-                .coerceIn(
-                    (segment.start + minimumSegmentDuration),
-                    min(durationMs, segment.start + maximumSegmentDuration)
-                )
-            _segment.value = Segment(segment.start, newXEnd)
-        }
-    }
+//    fun addToStart(by: Int) {
+//        segment.value.let { segment ->
+//            val newXStart = (segment.start + by)
+//                .coerceIn(
+//                    max(0, segment.end - maximumSegmentDuration),
+//                    segment.end - minimumSegmentDuration
+//                )
+//            _segment.value = Segment(newXStart, segment.end)
+//        }
+//    }
+//
+//    fun addToEnd(by: Int) {
+//        segment.value.let { segment ->
+//            val newXEnd = (segment.end + by)
+//                .coerceIn(
+//                    (segment.start + minimumSegmentDuration),
+//                    min(durationMs, segment.start + maximumSegmentDuration)
+//                )
+//            _segment.value = Segment(segment.start, newXEnd)
+//        }
+//    }
 
     fun onLongPress(pressedAt: Offset) {
 
@@ -181,8 +174,44 @@ class SegmentPickerState(
 
     }
 
-    fun onHorizontalDrag(change: PointerInputChange, dragAmount: Float, touchTargetSize: Float) {
+    suspend fun onWindowDrag(
+        change: PointerInputChange,
+        dragAmount: Float,
+        touchTargetSize: Float
+    ) = withContext(Dispatchers.Default) {
+        val xStart = durationToPx(window.value.start)
+        val xEnd = durationToPx(window.value.end)
+        val by = pxToDuration(dragAmount).toInt()
 
+        // end is being dragged
+        if (abs(xEnd - change.position.x) <= touchTargetSize) {
+            val newEnd = (window.value.end + by)
+                .coerceIn(window.value.start + minimumWindowDuration, durationMs)
+            _window.value = _window.value.copy(second = newEnd)
+            return@withContext
+        }
+
+        // start is being dragged
+        if (abs(xStart - change.position.x) <= touchTargetSize) {
+            val newStart = (window.value.start + by)
+                .coerceIn(0, (durationMs - minimumWindowDuration))
+            _window.value = _window.value.copy(first = newStart)
+            return@withContext
+        }
+
+        // entire window is being dragged
+        if (change.position.x in (xStart..xEnd)) {
+            val newEnd = (window.value.end + by)
+                .coerceIn(
+                    window.value.start + minimumWindowDuration,
+                    durationMs
+                )
+            val newStart = (window.value.start + by)
+                .coerceIn(0, (durationMs - minimumWindowDuration))
+            _window.value = _window.value.copy(second = newEnd)
+            _window.value = Segment(newStart, newEnd)
+            return@withContext
+        }
     }
 
 
@@ -248,12 +277,11 @@ class SegmentPickerState(
 }
 
 @Composable
-fun rememberAudioSegmentationState(
+fun rememberAudioSegmentPickerState(
     key: Any? = null,
     audioFilePath: String,
     durationMs: Long,
     amplitudes: List<Int>,
-    enableAdjustment: Boolean,
     graphHeight: Dp = MIN_GRAPH_HEIGHT,
     style: DrawStyle = Fill,
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,

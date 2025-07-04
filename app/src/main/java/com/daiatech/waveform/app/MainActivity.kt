@@ -8,13 +8,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,15 +24,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.daiatech.waveform.app.ui.theme.WaveFormTheme
-import com.daiatech.waveform.segmentation.AudioSegmentationUi
-import com.daiatech.waveform.segmentation.rememberAudioSegmentationState
+import com.daiatech.waveform.segmetation2.AudioSegmentPicker
+import com.daiatech.waveform.segmetation2.rememberAudioSegmentPickerState
 import linc.com.amplituda.Amplituda
 import linc.com.amplituda.AmplitudaResult
 import java.io.File
@@ -69,6 +65,10 @@ fun App() {
                 }
                 audioFilePath = file.path
             }
+        }
+        LaunchedEffect(Unit) {
+            audioFilePath = activity?.filesDir?.listFiles()
+                ?.firstOrNull { it.name.split(".").last() == ".mp3" }?.path
         }
         DisposableEffect(lifecycleOwner) {
             val observer = LifecycleEventObserver { _, event ->
@@ -120,13 +120,18 @@ fun App() {
             audioFilePath?.let { path ->
                 amplitudes?.let { amplitudes ->
                     duration?.let { duration ->
-                        val segmentationState = rememberAudioSegmentationState(
+                        val pickerState = rememberAudioSegmentPickerState(
                             audioFilePath = path,
                             amplitudes = amplitudes,
                             durationMs = duration,
-                            enableAdjustment = true
+                            segment = Pair(0, duration / 4),
+                            window = Pair(0, duration / 8)
                         )
-                        AudioSegmentationUi(state = segmentationState)
+                        AudioSegmentPicker(
+                            state = pickerState,
+                            mainPlayerProgress = 0,
+                            segmentPlaybackProgress = 0,
+                        )
                     }
                 }
             }
