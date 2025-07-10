@@ -1,6 +1,4 @@
 import java.util.Properties
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 plugins {
     alias(libs.plugins.android.library)
@@ -40,6 +38,7 @@ android {
     publishing {
         singleVariant("release") {
             withSourcesJar()
+            withJavadocJar()
         }
     }
 }
@@ -84,11 +83,11 @@ publishing {
             pom {
                 name.set(publishArtifactId)
                 description.set("A Jetpack Compose library to display various audio waveforms")
-                url.set("hhttps://github.com/karya-inc/waveform.git")
+                url.set("https://github.com/karya-inc/waveform.git")
 
                 licenses {
                     license {
-                        name.set("GNU license")
+                        name.set("GNU General Public License v3.0")
                         url.set("https://opensource.org/license/gpl-3-0")
                     }
                 }
@@ -99,6 +98,11 @@ publishing {
                         name.set("Divyansh Kushwaha")
                         email.set("divyansh@karya.in")
                     }
+                }
+
+                organization {
+                    name.set("Karya")
+                    url.set("https://karya.in")
                 }
 
                 scm {
