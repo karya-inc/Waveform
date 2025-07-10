@@ -1,10 +1,10 @@
-package com.daiatech.waveform.segmentation
+package com.daiatech.waveform.models
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-data class SegmentationColors(
+data class WaveformColors(
     val activeWindowColor: Color,
     val inactiveWindowColor: Color,
     val windowTextColor: Color,
@@ -18,7 +18,7 @@ data class SegmentationColors(
 
 
 @Composable
-fun segmentationColors(
+fun waveformColors(
     activeWindowColor: Color = MaterialTheme.colorScheme.inversePrimary,
     inactiveWindowColor: Color = MaterialTheme.colorScheme.inversePrimary.copy(0.5f),
     windowTextColor: Color = MaterialTheme.colorScheme.onPrimary,
@@ -28,8 +28,8 @@ fun segmentationColors(
     markerColor: Color = MaterialTheme.colorScheme.secondary,
     primaryProgressColor: Color = (MaterialTheme.colorScheme.secondary),
     secondaryProgressColor: Color = (MaterialTheme.colorScheme.tertiary),
-): SegmentationColors {
-    return SegmentationColors(
+): WaveformColors {
+    return WaveformColors(
         activeWindowColor = activeWindowColor,
         inactiveWindowColor = inactiveWindowColor,
         windowTextColor = windowTextColor,
