@@ -35,10 +35,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daiatech.waveform.models.WaveformAlignment
-import com.daiatech.waveform.segmentation.SegmentationColors
+import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.segmentation.TEXT_HEIGHT_PADDING
 import com.daiatech.waveform.segmentation.end
-import com.daiatech.waveform.segmentation.segmentationColors
+import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.segmentation.start
 import com.daiatech.waveform.toSecsAndMs
 
@@ -50,7 +50,7 @@ fun AudioMarkerUi(
     topPlayerProgress: Long,
     segmentPlaybackProgress: Long,
     markersCount: Int = 10,
-    colors: SegmentationColors = segmentationColors()
+    colors: WaveformColors = waveformColors()
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()

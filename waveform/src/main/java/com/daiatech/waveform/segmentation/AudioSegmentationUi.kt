@@ -69,6 +69,8 @@ import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.R
 import com.daiatech.waveform.models.WaveformAlignment
+import com.daiatech.waveform.models.WaveformColors
+import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.toSecsAndMs
 import com.daiatech.waveform.touchTargetSize
 import kotlinx.coroutines.CoroutineScope
@@ -77,7 +79,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Locale
 import kotlin.ranges.coerceIn
 
 internal val TEXT_HEIGHT_PADDING = 12.dp
@@ -86,7 +87,7 @@ internal val TEXT_HEIGHT_PADDING = 12.dp
 fun AudioSegmentationUi(
     modifier: Modifier = Modifier,
     state: SegmentationState,
-    colors: SegmentationColors = segmentationColors(),
+    colors: WaveformColors = waveformColors(),
     markersCount: Int = 10,
     addSegmentText: String = "+ Add",
     removeSegmentText: String = "- Remove",
