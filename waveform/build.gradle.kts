@@ -65,7 +65,7 @@ dependencies {
 }
 
 val publishGroupId = "io.github.karya-inc"
-val publishArtifactVersion = "0.0.1"
+val publishArtifactVersion = "0.0.2"
 val publishArtifactId = "waveform"
 
 group = publishGroupId
