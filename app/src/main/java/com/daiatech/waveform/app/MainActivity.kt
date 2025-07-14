@@ -51,10 +51,10 @@ class MainActivity : ComponentActivity() {
 fun App() {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         val activity = LocalActivity.current
-        val lifecycleOwner = LocalLifecycleOwner.current
         var audioFilePath by remember { mutableStateOf<String?>(null) }
-        val audioPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent())
-        { uri ->
+        val audioPicker = rememberLauncherForActivityResult(
+            ActivityResultContracts.GetContent()
+        ) { uri ->
             if (uri != null && activity != null) {
                 val identifier = System.currentTimeMillis().toString().substring(0, 6)
                 val file = File(activity.filesDir, "sample_audio_$identifier.mp3")
@@ -69,18 +69,6 @@ fun App() {
         LaunchedEffect(Unit) {
             audioFilePath = activity?.filesDir?.listFiles()
                 ?.firstOrNull { it.name.split(".").last() == ".mp3" }?.path
-        }
-        DisposableEffect(lifecycleOwner) {
-            val observer = LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_DESTROY) {
-                    activity?.filesDir?.listFiles()?.forEach { it.delete() }
-                }
-            }
-            lifecycleOwner.lifecycle.addObserver(observer)
-
-            onDispose {
-                lifecycleOwner.lifecycle.removeObserver(observer)
-            }
         }
         var amplitudes by remember { mutableStateOf<List<Int>?>(null) }
         var duration by remember { mutableStateOf<Long?>(null) }
@@ -135,6 +123,7 @@ fun App() {
                     }
                 }
             }
+
             Button(onClick = { audioPicker.launch("audio/*") }) {
                 Text("Pick Audio")
             }

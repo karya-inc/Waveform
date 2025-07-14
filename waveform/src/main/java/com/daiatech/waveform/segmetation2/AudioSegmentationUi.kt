@@ -305,10 +305,13 @@ fun AudioSegmentPicker(
             if (state.activeWindow.value == ActiveWindow.SEGMENT) {
                 drawRoundRect(
                     brush = SolidColor(colors.secondaryProgressColor),
-                    topLeft = Offset(segmentXStart, TEXT_HEIGHT_PADDING.toPx()),
+                    topLeft = Offset(
+                        segmentXStart,
+                        (state.graphHeight * 0.3F + TEXT_HEIGHT_PADDING).toPx()
+                    ),
                     size = Size(
                         segmentXEnd - segmentXStart,
-                        (state.graphHeight + TEXT_HEIGHT_PADDING).toPx()
+                        (state.graphHeight * 0.7F + TEXT_HEIGHT_PADDING).toPx()
                     ),
                     style = Stroke(width = state.spikeWidth.toPx())
                 )
