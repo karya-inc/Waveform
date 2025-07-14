@@ -64,14 +64,17 @@ class SegmentPickerState(
 
     /***************************  UI States   *****************************/
 
-//    private val _segment = mutableStateOf(segment)
-//    val segment: State<Segment> = _segment
+    private val _segment = mutableStateOf(segment)
+    val segment: State<Segment> = _segment
 
     private val _window = mutableStateOf(window)
     val window: State<Segment> = _window
 
     private val _spikeAmplitudes = mutableStateOf(listOf<Float>())
     val spikeAmplitude: State<List<Float>> = _spikeAmplitudes
+
+    private val _activeWindow = mutableStateOf<ActiveWindow>(ActiveWindow.WINDOW)
+    val activeWindow: State<ActiveWindow> = _activeWindow
 
     private val _zoomedInAmplitudes = mutableStateOf(listOf<Float>())
     val zoomedInAmplitudes: State<List<Float>> = _zoomedInAmplitudes
@@ -144,34 +147,72 @@ class SegmentPickerState(
     /***************************  UI States   *****************************/
 
     /***************************  UI INTERACTIONS   *****************************/
-//    fun addToStart(by: Int) {
-//        segment.value.let { segment ->
-//            val newXStart = (segment.start + by)
-//                .coerceIn(
-//                    max(0, segment.end - maximumSegmentDuration),
-//                    segment.end - minimumSegmentDuration
-//                )
-//            _segment.value = Segment(newXStart, segment.end)
-//        }
-//    }
-//
-//    fun addToEnd(by: Int) {
-//        segment.value.let { segment ->
-//            val newXEnd = (segment.end + by)
-//                .coerceIn(
-//                    (segment.start + minimumSegmentDuration),
-//                    min(durationMs, segment.start + maximumSegmentDuration)
-//                )
-//            _segment.value = Segment(segment.start, newXEnd)
-//        }
-//    }
+    fun onSelect(what: ActiveWindow) {
+        _activeWindow.value = what
+    }
 
-    fun onLongPress(pressedAt: Offset) {
+    fun addToStart(by: Int) {
+        when (activeWindow.value) {
+            ActiveWindow.WINDOW -> {
+                val newStart = (window.value.start + by)
+                    .coerceIn(0, (durationMs - minimumWindowDuration))
+                _window.value = window.value.copy(first = newStart)
+            }
+
+            ActiveWindow.SEGMENT -> {
+                val newStart = (segment.value.start + by)
+                    .coerceIn(0, (durationMs - minimumSegmentDuration))
+                _segment.value = segment.value.copy(first = newStart)
+            }
+        }
 
     }
 
-    fun onTap(tappedAt: Offset) {
+    fun addToEnd(by: Int) {
+        when (activeWindow.value) {
+            ActiveWindow.WINDOW -> {
+                val newEnd = (window.value.end + by)
+                    .coerceIn(window.value.start + minimumWindowDuration, durationMs)
+                _window.value = window.value.copy(second = newEnd)
+            }
 
+            ActiveWindow.SEGMENT -> {
+                val newEnd = (segment.value.end + by)
+                    .coerceIn(segment.value.start + minimumSegmentDuration, durationMs)
+                _segment.value = segment.value.copy(second = newEnd)
+            }
+        }
+    }
+
+    fun moveWindow(by: Int) {
+        when (activeWindow.value) {
+            ActiveWindow.WINDOW -> {
+                val newEnd = (window.value.end + by)
+                    .coerceIn(
+                        window.value.start + minimumWindowDuration,
+                        durationMs
+                    )
+                val newStart = (window.value.start + by)
+                    .coerceIn(0, (durationMs - minimumWindowDuration))
+                if (newEnd == window.value.end || newStart == window.value.start) return
+                _window.value = _window.value.copy(second = newEnd)
+                _window.value = Segment(newStart, newEnd)
+            }
+
+            ActiveWindow.SEGMENT -> {
+                val newStart = (segment.value.start + by)
+                    .coerceIn(window.value.start, (window.value.end - minimumSegmentDuration))
+
+                val newEnd = (segment.value.end + by)
+                    .coerceIn(
+                        segment.value.start + minimumSegmentDuration,
+                        window.value.end
+                    )
+                if (newEnd == segment.value.end || newStart == segment.value.start) return
+                _segment.value = segment.value.copy(second = newEnd)
+                _segment.value = Segment(newStart, newEnd)
+            }
+        }
     }
 
     suspend fun onWindowDrag(
@@ -185,31 +226,19 @@ class SegmentPickerState(
 
         // end is being dragged
         if (abs(xEnd - change.position.x) <= touchTargetSize) {
-            val newEnd = (window.value.end + by)
-                .coerceIn(window.value.start + minimumWindowDuration, durationMs)
-            _window.value = _window.value.copy(second = newEnd)
+            addToEnd(by)
             return@withContext
         }
 
         // start is being dragged
         if (abs(xStart - change.position.x) <= touchTargetSize) {
-            val newStart = (window.value.start + by)
-                .coerceIn(0, (durationMs - minimumWindowDuration))
-            _window.value = _window.value.copy(first = newStart)
+            addToStart(by)
             return@withContext
         }
 
         // entire window is being dragged
         if (change.position.x in (xStart..xEnd)) {
-            val newEnd = (window.value.end + by)
-                .coerceIn(
-                    window.value.start + minimumWindowDuration,
-                    durationMs
-                )
-            val newStart = (window.value.start + by)
-                .coerceIn(0, (durationMs - minimumWindowDuration))
-            _window.value = _window.value.copy(second = newEnd)
-            _window.value = Segment(newStart, newEnd)
+            moveWindow(by)
             return@withContext
         }
     }

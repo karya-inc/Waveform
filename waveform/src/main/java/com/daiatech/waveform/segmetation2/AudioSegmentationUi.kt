@@ -1,8 +1,10 @@
 package com.daiatech.waveform.segmetation2
 
+import android.util.Log
 import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,7 +25,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.text.TextStyle
@@ -33,12 +37,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.daiatech.waveform.models.WaveformAlignment
+import com.daiatech.waveform.models.WaveformColors
+import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.segmentation.TEXT_HEIGHT_PADDING
 import com.daiatech.waveform.segmentation.end
 import com.daiatech.waveform.segmentation.start
 import com.daiatech.waveform.toSecsAndMs
 import com.daiatech.waveform.touchTargetSize
 import kotlinx.coroutines.launch
+
+// TODO: 1. Compute zoomed-in amps only when the dragging has stopped
+//       2. Add +- 50ms for window
 
 /**
  * This component enables workers to pick a segment of audio
@@ -49,7 +58,7 @@ fun AudioSegmentPicker(
     state: SegmentPickerState,
     mainPlayerProgress: Long,
     segmentPlaybackProgress: Long,
-    colors: SegmentationColors = segmentationColors(),
+    colors: WaveformColors = waveformColors(),
     markersCount: Int = 10
 ) {
     val textMeasurer = rememberTextMeasurer()
@@ -60,7 +69,6 @@ fun AudioSegmentPicker(
     val textMeasure2 = remember { textMeasurer.measure("2", textStyle) }
     var canvasSize by remember { mutableStateOf(Size(0f, 0f)) }
     LaunchedEffect(canvasSize) { state.canvasSize = canvasSize }
-    var enableSpikeAmplification by remember { mutableStateOf(false) }
     var spikes by remember { mutableIntStateOf(0) }
     var spikesMultiplier by remember { mutableFloatStateOf(1f) }
 
@@ -76,6 +84,24 @@ fun AudioSegmentPicker(
         state.computeZoomedInDrawableAmplitudes(spikes, spikesMultiplier)
     }
 
+    val (segmentXStart, segmentXEnd) = remember(
+        state.segment.value.start,
+        state.window.value.start,
+        state.segment.value.end
+    ) {
+        val x = state.durationToPx(
+            time = state.segment.value.start,
+            start = state.window.value.start,
+            end = state.window.value.end
+        )
+        val xe = state.durationToPx(
+            time = state.segment.value.end,
+            start = state.window.value.start,
+            end = state.window.value.end
+        )
+        x to xe
+    }
+
     Column(modifier) {
         Canvas(
             modifier = Modifier
@@ -84,11 +110,16 @@ fun AudioSegmentPicker(
                 .pointerInput(state.audioFilePath) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
-                            coroutineScope.launch {
-                                state.onWindowDrag(change, dragAmount, touchTargetSize.toPx())
+                            if (state.activeWindow.value == ActiveWindow.WINDOW) {
+                                coroutineScope.launch {
+                                    state.onWindowDrag(change, dragAmount, touchTargetSize.toPx())
+                                }
                             }
                         }
                     )
+                }
+                .pointerInput(state.audioFilePath) {
+                    detectTapGestures { state.onSelect(ActiveWindow.WINDOW) }
                 }
         ) {
             canvasSize = size
@@ -139,6 +170,19 @@ fun AudioSegmentPicker(
                 )
             }
 
+            // Show segment on the minimap
+            state.segment.value.let { segment ->
+                val xStart = size.width / state.durationMs.toFloat() * segment.start
+                val xEnd = size.width / state.durationMs.toFloat() * segment.end
+                // draw a window from xStart to xEnd
+                drawRoundRect(
+                    brush = SolidColor(colors.secondaryProgressColor.copy(0.4F)),
+                    topLeft = Offset(xStart, size.height.times(0.3F)),
+                    size = Size(xEnd - xStart, size.height.times(0.7F)),
+                    style = Fill
+                )
+            }
+
             // Highlighted Segment boundary
             state.window.value.let { segment ->
                 val xStart = size.width / state.durationMs.toFloat() * segment.start
@@ -151,6 +195,15 @@ fun AudioSegmentPicker(
                     size = Size(xEnd - xStart, size.height),
                     style = Fill
                 )
+
+                if (state.activeWindow.value == ActiveWindow.WINDOW) {
+                    drawRoundRect(
+                        brush = SolidColor(colors.buttonColor),
+                        topLeft = Offset(xStart, 0F),
+                        size = Size(xEnd - xStart, size.height),
+                        style = Stroke(width = state.spikeWidth.toPx())
+                    )
+                }
 
                 // circle on the start-edge
                 drawCircle(
@@ -199,19 +252,19 @@ fun AudioSegmentPicker(
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .pointerInteropFilter {
-                    return@pointerInteropFilter when (it.action) {
-                        MotionEvent.ACTION_DOWN,
-                        MotionEvent.ACTION_MOVE -> {
-                            if (it.x in 0F..canvasSize.width) {
-                                true
-                            } else {
-                                false
+                .pointerInput(state.audioFilePath) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { change, dragAmount ->
+                            if (state.activeWindow.value == ActiveWindow.SEGMENT) {
+                                coroutineScope.launch {
+                                    state.onWindowDrag(change, dragAmount, touchTargetSize.toPx())
+                                }
                             }
                         }
-
-                        else -> false
-                    }
+                    )
+                }
+                .pointerInput(state.audioFilePath) {
+                    detectTapGestures { state.onSelect(ActiveWindow.SEGMENT) }
                 }
                 .height(state.graphHeight + TEXT_HEIGHT_PADDING.times(2))
         ) {
@@ -235,6 +288,29 @@ fun AudioSegmentPicker(
                         state.spikeRadius.toPx()
                     ),
                     style = state.style
+                )
+            }
+            drawRoundRect(
+                brush = SolidColor(colors.secondaryProgressColor.copy(0.6f)),
+                topLeft = Offset(
+                    segmentXStart,
+                    (state.graphHeight * 0.3F + TEXT_HEIGHT_PADDING).toPx()
+                ),
+                size = Size(
+                    segmentXEnd - segmentXStart,
+                    (state.graphHeight * 0.7F + TEXT_HEIGHT_PADDING).toPx()
+                ),
+                style = Fill
+            )
+            if (state.activeWindow.value == ActiveWindow.SEGMENT) {
+                drawRoundRect(
+                    brush = SolidColor(colors.secondaryProgressColor),
+                    topLeft = Offset(segmentXStart, TEXT_HEIGHT_PADDING.toPx()),
+                    size = Size(
+                        segmentXEnd - segmentXStart,
+                        (state.graphHeight + TEXT_HEIGHT_PADDING).toPx()
+                    ),
+                    style = Stroke(width = state.spikeWidth.toPx())
                 )
             }
 
@@ -295,6 +371,17 @@ fun AudioSegmentPicker(
         }
 
         Spacer(modifier = Modifier.height(12.dp))
+
+        SegmentationActions(
+            colors = colors,
+            start = state.window.value.start,
+            end = state.window.value.end,
+            isPlaying = false,
+            progressMs = 0L,
+            togglePlayback = {},
+            addToStart = state::addToStart,
+            addToEnd = state::addToEnd
+        )
     }
 }
 
