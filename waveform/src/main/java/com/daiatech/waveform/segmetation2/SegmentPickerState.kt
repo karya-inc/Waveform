@@ -237,7 +237,7 @@ class SegmentPickerState(
         }
 
         // entire window is being dragged
-        if (change.position.x in (xStart..xEnd)) {
+        if (change.position.x in ((xStart + touchTargetSize)..(xEnd - touchTargetSize))) {
             moveWindow(by)
             return@withContext
         }

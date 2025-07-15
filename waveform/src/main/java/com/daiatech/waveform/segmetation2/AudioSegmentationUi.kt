@@ -85,9 +85,8 @@ fun AudioSegmentPicker(
     }
 
     val (segmentXStart, segmentXEnd) = remember(
-        state.segment.value.start,
-        state.window.value.start,
-        state.segment.value.end
+        state.segment.value,
+        state.window.value
     ) {
         val x = state.durationToPx(
             time = state.segment.value.start,
