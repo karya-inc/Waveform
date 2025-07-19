@@ -58,6 +58,7 @@ fun AudioSegmentPicker(
     state: SegmentPickerState,
     mainPlayerProgress: Long,
     segmentPlaybackProgress: Long,
+    toggleSegmentPlayback: (ActiveWindow, Segment) -> Unit,
     colors: WaveformColors = waveformColors(),
     markersCount: Int = 10
 ) {
@@ -380,7 +381,13 @@ fun AudioSegmentPicker(
             end = state.window.value.end,
             isPlaying = false,
             progressMs = 0L,
-            togglePlayback = {},
+            togglePlayback = {
+                val segment = when (state.activeWindow.value) {
+                    ActiveWindow.WINDOW -> state.window.value
+                    ActiveWindow.SEGMENT -> state.segment.value
+                }
+                toggleSegmentPlayback(state.activeWindow.value, segment)
+            },
             addToStart = state::addToStart,
             addToEnd = state::addToEnd
         )
@@ -401,7 +408,8 @@ private fun AudioSegmentationUi2Prev() {
         AudioSegmentPicker(
             state = state,
             mainPlayerProgress = 10,
-            segmentPlaybackProgress = 20
+            segmentPlaybackProgress = 20,
+            toggleSegmentPlayback = { _, _ -> }
         )
     }
 }
