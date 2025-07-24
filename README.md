@@ -14,7 +14,7 @@ A modern, Jetpack Compose-based Android library to visualize audio waveforms, pl
 
 ```kotlin
 dependencies {
-    implementation(""io.github.karya-inc:waveform:<latest-version>")
+    implementation("io.github.karya-inc:waveform:<latest-version>")
 }
 ```
 
