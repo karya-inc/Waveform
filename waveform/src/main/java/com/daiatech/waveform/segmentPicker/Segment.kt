@@ -1,4 +1,4 @@
-package com.daiatech.waveform.segmetation2
+package com.daiatech.waveform.segmentPicker
 
 internal typealias Segment = Pair<Long, Long>
 

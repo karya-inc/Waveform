@@ -1,12 +1,9 @@
-package com.daiatech.waveform.segmetation2
+package com.daiatech.waveform.segmentPicker
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -31,8 +28,6 @@ import com.daiatech.waveform.segmentation.end
 import com.daiatech.waveform.segmentation.start
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.math.abs
-import kotlin.math.max
 import kotlin.math.min
 
 class SegmentPickerState(
@@ -73,8 +68,15 @@ class SegmentPickerState(
     private val _spikeAmplitudes = mutableStateOf(listOf<Float>())
     val spikeAmplitude: State<List<Float>> = _spikeAmplitudes
 
-    private val _activeWindow = mutableStateOf<ActiveWindow>(ActiveWindow.WINDOW)
+    private val _activeWindow = mutableStateOf(ActiveWindow.WINDOW)
     val activeWindow: State<ActiveWindow> = _activeWindow
+
+    val activeSegment
+        get() = when (_activeWindow.value) {
+            ActiveWindow.WINDOW -> _window.value
+            ActiveWindow.SEGMENT -> _segment.value
+        }
+
 
     private val _zoomedInAmplitudes = mutableStateOf(listOf<Float>())
     val zoomedInAmplitudes: State<List<Float>> = _zoomedInAmplitudes
@@ -223,7 +225,7 @@ class SegmentPickerState(
         val xStart = durationToPx(window.value.start)
         val xEnd = durationToPx(window.value.end)
         val by = pxToDuration(dragAmount).toInt()
-
+/*
         // end is being dragged
         if (abs(xEnd - change.position.x) <= touchTargetSize) {
             addToEnd(by)
@@ -235,7 +237,7 @@ class SegmentPickerState(
             addToStart(by)
             return@withContext
         }
-
+*/
         // entire window is being dragged
         if (change.position.x in ((xStart + touchTargetSize)..(xEnd - touchTargetSize))) {
             moveWindow(by)

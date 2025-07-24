@@ -1,7 +1,5 @@
-package com.daiatech.waveform.segmetation2
+package com.daiatech.waveform.segmentPicker
 
-import android.util.Log
-import android.view.MotionEvent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -25,11 +23,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -56,9 +52,10 @@ import kotlinx.coroutines.launch
 fun AudioSegmentPicker(
     modifier: Modifier = Modifier,
     state: SegmentPickerState,
+    isPlaying: Boolean,
     mainPlayerProgress: Long,
     segmentPlaybackProgress: Long,
-    toggleSegmentPlayback: (ActiveWindow, Segment) -> Unit,
+    toggleSegmentPlayback: () -> Unit,
     colors: WaveformColors = waveformColors(),
     markersCount: Int = 10
 ) {
@@ -377,17 +374,11 @@ fun AudioSegmentPicker(
 
         SegmentationActions(
             colors = colors,
-            start = state.window.value.start,
-            end = state.window.value.end,
-            isPlaying = false,
+            start = state.activeSegment.start,
+            end = state.activeSegment.end,
+            isPlaying = isPlaying,
             progressMs = 0L,
-            togglePlayback = {
-                val segment = when (state.activeWindow.value) {
-                    ActiveWindow.WINDOW -> state.window.value
-                    ActiveWindow.SEGMENT -> state.segment.value
-                }
-                toggleSegmentPlayback(state.activeWindow.value, segment)
-            },
+            togglePlayback = { toggleSegmentPlayback() },
             addToStart = state::addToStart,
             addToEnd = state::addToEnd
         )
@@ -409,7 +400,8 @@ private fun AudioSegmentationUi2Prev() {
             state = state,
             mainPlayerProgress = 10,
             segmentPlaybackProgress = 20,
-            toggleSegmentPlayback = { _, _ -> }
+            toggleSegmentPlayback = { },
+            isPlaying = true
         )
     }
 }

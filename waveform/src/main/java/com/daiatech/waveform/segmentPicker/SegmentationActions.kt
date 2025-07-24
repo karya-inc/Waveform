@@ -1,4 +1,4 @@
-package com.daiatech.waveform.segmetation2
+package com.daiatech.waveform.segmentPicker
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
