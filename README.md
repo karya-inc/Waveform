@@ -147,4 +147,4 @@ Contributions, bug reports, and feature suggestions are welcome! Feel free to op
 
 ## 🙏 Acknowledgements
 
-This library is inspired by https://github.com/lincollincol/compose-audiowaveform by @lincollincol
+This library is inspired by [compose-audiowaveform](https://github.com/lincollincol/compose-audiowaveform) by [lincollincol](https://github.com/lincollincol)
