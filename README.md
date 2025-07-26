@@ -145,6 +145,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 Contributions, bug reports, and feature suggestions are welcome! Feel free to open an issue or pull request.
 
-🙏 Acknowledgements
+## 🙏 Acknowledgements
 
 This library is inspired by https://github.com/lincollincol/compose-audiowaveform by @lincollincol
