@@ -7,6 +7,10 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.nexus.publish).apply(true)
+    alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.composeMultiplatform) apply false
+    alias(libs.plugins.composeHotReload) apply false
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
 }
 
 val mvnCentralUsername: String by extra("")

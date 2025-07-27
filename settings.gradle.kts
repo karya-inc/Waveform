@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "WaveForm"
 include(":app")
 include(":waveform")
+include(":library")
