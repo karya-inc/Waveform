@@ -9,11 +9,12 @@ import androidx.compose.ui.unit.dp
  */
 data class SegmentationUiProperties(
     val spikeWidth: Dp = 2.dp,
-    val color : Colors = Colors()
+    val spikePadding: Dp = 2.dp,
+    val spikeMaxHeight: Dp = 48.dp,
 )
 
 data class Colors(
     val containerColor: Color = Color(0xFF002827),
     val primaryContentColor: Color = Color(0xFFFCFCFC),
-    val actionsColor: Color= Color(0xFF009688)
+    val actionsColor: Color = Color(0xFF009688)
 )
