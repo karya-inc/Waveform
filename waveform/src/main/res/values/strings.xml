@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="play">Play</string>
+    <string name="open_close_tag">Open/Close Tag</string>
+    <string name="standalone_tag">Standalone Tag</string>
 </resources>
