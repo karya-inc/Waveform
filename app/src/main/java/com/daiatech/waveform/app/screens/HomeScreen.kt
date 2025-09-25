@@ -27,7 +27,8 @@ import java.io.File
 @Composable
 fun HomeScreen(
     navigateToSegmentation: (String) -> Unit,
-    navigateToSegmentPicker: (String) -> Unit
+    navigateToSegmentPicker: (String) -> Unit,
+    navigateToAmplitudeGraph: (String) -> Unit
 ) {
     val context = LocalContext.current
     var files by remember { mutableStateOf<List<String>>(listOf()) }
@@ -72,6 +73,9 @@ fun HomeScreen(
 
                     Button(onClick = { navigateToSegmentPicker(files[selected]) }) {
                         Text("Audio Segment Picker")
+                    }
+                    Button(onClick = { navigateToAmplitudeGraph(files[selected]) }) {
+                        Text("Amplitude Visualization")
                     }
                 }
             }
