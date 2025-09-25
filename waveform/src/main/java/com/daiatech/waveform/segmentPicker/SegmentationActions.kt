@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.daiatech.waveform.R
 import com.daiatech.waveform.Res
 import com.daiatech.waveform.ic_arrow_left
 import com.daiatech.waveform.ic_arrow_right
