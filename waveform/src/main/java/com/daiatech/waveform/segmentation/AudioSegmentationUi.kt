@@ -52,7 +52,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -67,7 +66,6 @@ import com.daiatech.waveform.AUDIO_PLAYER_REFRESH_RATE_MS
 import com.daiatech.waveform.AudioPlayer
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
-import com.daiatech.waveform.R
 import com.daiatech.waveform.Res
 import com.daiatech.waveform.ic_arrow_left
 import com.daiatech.waveform.ic_arrow_right
