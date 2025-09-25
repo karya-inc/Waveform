@@ -68,6 +68,13 @@ import com.daiatech.waveform.AudioPlayer
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.R
+import com.daiatech.waveform.Res
+import com.daiatech.waveform.ic_arrow_left
+import com.daiatech.waveform.ic_arrow_right
+import com.daiatech.waveform.ic_pause
+import com.daiatech.waveform.ic_play_arrow
+import com.daiatech.waveform.ic_zoom_in
+import com.daiatech.waveform.marker_2
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
@@ -79,6 +86,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import kotlin.ranges.coerceIn
 
 internal val TEXT_HEIGHT_PADDING = 12.dp
@@ -493,7 +501,7 @@ fun AudioSegmentationUi(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        id = R.drawable.ic_arrow_left
+                                        resource = Res.drawable.ic_arrow_left
                                     ),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
@@ -516,7 +524,7 @@ fun AudioSegmentationUi(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        id = R.drawable.ic_arrow_right
+                                        resource = Res.drawable.ic_arrow_right
                                     ),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
@@ -569,9 +577,9 @@ fun AudioSegmentationUi(
                             enabled = state.activeSegment.value != null
                         ) {
                             val res =
-                                if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
+                                if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow
                             Icon(
-                                painter = painterResource(id = res),
+                                painter = painterResource(resource = res),
                                 contentDescription = null,
                                 tint = colors.buttonColor
                             )
@@ -604,7 +612,7 @@ fun AudioSegmentationUi(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        id = R.drawable.ic_arrow_left
+                                        resource = Res.drawable.ic_arrow_left
                                     ),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
@@ -627,7 +635,7 @@ fun AudioSegmentationUi(
                             ) {
                                 Icon(
                                     painter = painterResource(
-                                        id = R.drawable.ic_arrow_right
+                                        resource = Res.drawable.ic_arrow_right
                                     ),
                                     contentDescription = null,
                                     modifier = Modifier.size(24.dp),
@@ -677,7 +685,7 @@ fun AudioSegmentationUi(
                 )
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_zoom_in),
+                    painter = painterResource(resource = Res.drawable.ic_zoom_in),
                     contentDescription = "zoom",
                     tint = zoomButtonTint
                 )
@@ -790,7 +798,7 @@ fun WindowMarker(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(id = R.drawable.marker_2),
+            painter = painterResource(resource = Res.drawable.marker_2),
             contentDescription = null,
             modifier = Modifier.size(32.dp),
             tint = containerColor

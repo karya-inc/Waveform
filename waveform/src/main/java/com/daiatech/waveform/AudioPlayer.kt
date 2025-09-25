@@ -20,13 +20,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RowScope.AudioPlayer(
@@ -118,8 +118,8 @@ private fun RowScope.AudioPlayer(
 ) {
     val progress = if (durationMS == 0L) 0f else currentPosition.toFloat().div(durationMS)
     Icon(
-        painter = painterResource(id = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow),
-        contentDescription = stringResource(R.string.play),
+        painter = painterResource(resource = if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow),
+        contentDescription = stringResource(resource = Res.string.play),
         modifier = Modifier
             .size(48.dp)
             .clickable { if (isPlaying) onPause() else onPlay() },

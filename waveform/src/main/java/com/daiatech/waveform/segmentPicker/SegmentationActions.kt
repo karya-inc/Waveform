@@ -21,13 +21,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.R
+import com.daiatech.waveform.Res
+import com.daiatech.waveform.ic_arrow_left
+import com.daiatech.waveform.ic_arrow_right
+import com.daiatech.waveform.ic_pause
+import com.daiatech.waveform.ic_play_arrow
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.segmentation.WindowMarker
 import com.daiatech.waveform.segmentation.changeSegmentPosition
 import com.daiatech.waveform.toSecsAndMs
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SegmentationActions(
@@ -63,7 +68,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = R.drawable.ic_arrow_left
+                            resource = Res.drawable.ic_arrow_left
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
@@ -86,7 +91,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = R.drawable.ic_arrow_right
+                           resource = Res.drawable.ic_arrow_right
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
@@ -106,9 +111,9 @@ fun SegmentationActions(
                 onClick = togglePlayback,
             ) {
                 val res =
-                    if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play_arrow
+                    if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow
                 Icon(
-                    painter = painterResource(id = res),
+                    painter = painterResource(resource = res),
                     contentDescription = null,
                     tint = colors.buttonColor
                 )
@@ -143,7 +148,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = R.drawable.ic_arrow_left
+                           resource = Res.drawable.ic_arrow_left
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
@@ -166,7 +171,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                            id = R.drawable.ic_arrow_right
+                           resource = Res.drawable.ic_arrow_right
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),

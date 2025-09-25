@@ -1,136 +1,121 @@
-import java.util.Properties
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
+    alias(libs.plugins.androidLint)
+    alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.composeHotReload)
     id("maven-publish")
-    id("signing")
+    id("com.vanniktech.maven.publish") version "0.34.0"
 }
 
-android {
-    namespace = "com.daiatech.waveform"
-    compileSdk = 36
-
-    defaultConfig {
+kotlin {
+    androidLibrary {
+        namespace = "com.daiatech.waveform"
+        compileSdk = 36
         minSdk = 21
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles("consumer-rules.pro")
+        withHostTestBuilder {
+        }
+
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
+        experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
+
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+    jvm()
+
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+
+    listOf(
+        iosX64(),
+        iosArm64(),
+        iosSimulatorArm64(),
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "WaveformKit"
         }
     }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-    publishing {
-        singleVariant("release") {
-            withSourcesJar()
-            withJavadocJar()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.ui)
+                implementation(compose.material3)
+                implementation(compose.materialIconsExtended)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
+                // implementation(libs.androidx.lifecycle.runtimeCompose)
+            }
         }
-    }
-}
 
-dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-
-    implementation(libs.media3.exoplayer)
-
-    // compose
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    debugImplementation(libs.androidx.ui.tooling)
-
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-}
-
-val publishGroupId = "io.github.karya-inc"
-val publishArtifactVersion = "0.0.3"
-val publishArtifactId = "waveform"
-
-group = publishGroupId
-version = publishArtifactVersion
-
-publishing {
-    publications {
-        create<MavenPublication>("release") {
-            groupId = publishGroupId
-            artifactId = publishArtifactId
-            version = publishArtifactVersion
-
-            afterEvaluate { from(components["release"]) }
-
-            pom {
-                name.set(publishArtifactId)
-                description.set("A Jetpack Compose library to display various audio waveforms")
-                url.set("https://github.com/karya-inc/waveform.git")
-
-                licenses {
-                    license {
-                        name.set("GNU General Public License v3.0")
-                        url.set("https://opensource.org/license/gpl-3-0")
-                    }
-                }
-
-                developers {
-                    developer {
-                        id.set("divyansh@karya.in")
-                        name.set("Divyansh Kushwaha")
-                        email.set("divyansh@karya.in")
-                    }
-                }
-
-                organization {
-                    name.set("Karya")
-                    url.set("https://karya.in")
-                }
-
-                scm {
-                    connection.set("scm:git:ssh://git@github.com/karya-inc/waveform.git")
-                    developerConnection.set("scm:git:ssh://git@github.com/karya-inc/waveform.git")
-                    url.set("https://github.com/karya-inc/waveform.git")
-                }
+        androidMain {
+            kotlin.srcDir("src/main/java")
+            dependencies {
+                implementation(libs.androidx.core.ktx)
+                implementation(libs.media3.exoplayer)
+                implementation(libs.androidx.appcompat)
             }
         }
     }
 }
 
-val signingKeyId: String by extra("")
-val signingPassword: String by extra("")
-val signingKey: String by extra("")
-val secretPropsFile = rootProject.file("local.properties")
-val properties = Properties()
-if (secretPropsFile.exists()) {
-    secretPropsFile.inputStream().use { properties.load(it) }
-    properties.forEach { (name, value) ->
-        extra[name.toString()] = value
-    }
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.daiatech.waveform"
+    generateResClass = auto
 }
-signing {
-    useInMemoryPgpKeys(
-        signingKeyId,
-        signingKey,
-        signingPassword
+
+group = "io.github.karya-inc"
+version = "0.0.1"
+
+mavenPublishing {
+    val artifactId = "karya-ui"
+    publishToMavenCentral(true)
+    signAllPublications()
+
+    coordinates(
+        groupId = group.toString(),
+        artifactId = artifactId,
+        version = version.toString()
     )
-    sign(publishing.publications)
+
+    pom {
+        name.set(artifactId)
+        description.set("Compose multiplatform Karua-UI library")
+        url.set("https://github.com/karya-inc/Waveform.git")
+
+        licenses {
+            license {
+                name.set("GNU license")
+                url.set("https://opensource.org/license/gpl-3-0")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("divyansh@karya.in")
+                name.set("Divyansh Kushwaha")
+                email.set("divyansh@karya.in")
+            }
+        }
+
+        scm {
+            connection.set("scm:git:ssh://git@github.com/karya-inc/Waveform.git")
+            developerConnection.set("scm:git:ssh://git@github.com/karya-inc/Waveform.git")
+            url.set("https://github.com/karya-inc/Waveform.git")
+        }
+    }
 }
