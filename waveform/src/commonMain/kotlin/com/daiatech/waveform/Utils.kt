@@ -2,7 +2,6 @@ package com.daiatech.waveform
 
 import androidx.compose.ui.geometry.Offset
 import com.daiatech.waveform.models.AmplitudeType
-import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.pow
 import kotlin.math.roundToInt
@@ -86,7 +85,6 @@ internal fun List<Int>.toDrawableAmplitudes(
 }
 
 
-
 internal fun List<Float>.normalized(max: Float, min: Float, lMax: Float): List<Float> {
     val lMin = this.min()
 
@@ -111,6 +109,8 @@ internal fun List<Float>.normalized(max: Float, min: Float, lMax: Float): List<F
 internal fun toSecsAndMs(milliseconds: Long): String {
     val secs = milliseconds / 1000
     val ms = milliseconds % 1000
-    val time = secs + ms / 1000.0
-    return String.format(Locale.ROOT, "%.2f", time)
+    val hundredths = (ms + 5) / 10
+    val wholePart = secs + hundredths / 100
+    val fractionalPart = hundredths % 100
+    return "$wholePart.${fractionalPart.toString().padStart(2, '0')}"
 }
