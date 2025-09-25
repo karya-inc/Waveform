@@ -1,7 +1,5 @@
 package com.daiatech.waveform.transcription
 
-import androidx.compose.runtime.Composable
-
 
 import android.view.ViewTreeObserver
 import androidx.compose.foundation.background
@@ -23,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,8 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -43,7 +40,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.daiatech.waveform.R
+import com.daiatech.waveform.Res
+import com.daiatech.waveform.ic_tag
+import com.daiatech.waveform.ic_tag_filled
+import com.daiatech.waveform.open_close_tag
+import com.daiatech.waveform.standalone_tag
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 const val SHORTCUT_CHAR_1 = "{}"
 
@@ -182,10 +185,10 @@ fun TranscriptionTextEditor(
                             }) {
                                 Icon(
                                     painter = if (isColumnVisible) {
-                                        painterResource(id = R.drawable.ic_tag_filled)
+                                        painterResource(resource = Res.drawable.ic_tag_filled)
                                     } else {
                                         painterResource(
-                                            id = R.drawable.ic_tag
+                                            resource = Res.drawable.ic_tag
                                         )
                                     },
                                     contentDescription = "Tags",
@@ -231,7 +234,7 @@ fun TranscriptionTextEditor(
                         )
                     ) {
                         Text(
-                            text = stringResource(R.string.standalone_tag),
+                            text = stringResource(Res.string.standalone_tag),
                             color = colors.contentColor
                         )
                     }
@@ -248,7 +251,7 @@ fun TranscriptionTextEditor(
                         )
                     ) {
                         Text(
-                            text = stringResource(R.string.open_close_tag),
+                            text = stringResource(Res.string.open_close_tag),
                             color = colors.contentColor
                         )
                     }
