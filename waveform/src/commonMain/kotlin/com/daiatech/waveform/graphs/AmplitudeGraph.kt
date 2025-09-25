@@ -1,10 +1,10 @@
 package com.daiatech.waveform.graphs
 
-import android.view.MotionEvent
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.runtime.Composable
@@ -18,13 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.input.pointer.pointerInteropFilter
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
@@ -39,7 +36,10 @@ import com.daiatech.waveform.minSpikeRadiusDp
 import com.daiatech.waveform.minSpikeWidthDp
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.WaveformAlignment
+import com.daiatech.waveform.models.WaveformColors
+import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.toDrawableAmplitudes
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * A dynamic, real-time graph composable that visualizes audio amplitudes over time.
@@ -57,6 +57,7 @@ import com.daiatech.waveform.toDrawableAmplitudes
  * @param maxAmplitude The initial max amplitude used for scaling; updates dynamically if larger values are seen.
  * @param type The graph rendering style: bar or line (see [GraphType]).
  */
+@Suppress("LocalVariableName")
 @Composable
 fun AmplitudeGraph(
     modifier: Modifier = Modifier,
@@ -99,8 +100,7 @@ fun AmplitudeGraph(
  *
  * @param modifier Modifier applied to the Canvas layout.
  * @param style The [DrawStyle] used for drawing spikes (e.g., [Fill]).
- * @param waveformBrush Brush used to draw the waveform spikes.
- * @param progressBrush Brush used to draw the progress indicator.
+ * @param colors Custom colors for waveform elements.
  * @param waveformAlignment Vertical alignment of spikes in the canvas.
  * @param amplitudeType Type of amplitude processing (e.g., average, max) defined in [AmplitudeType].
  * @param spikeAnimationSpec Animation used for animating the amplitude spikes.
@@ -136,8 +136,7 @@ fun AmplitudeGraph(
 fun AmplitudeBarGraph(
     modifier: Modifier = Modifier,
     style: DrawStyle = Fill,
-    waveformBrush: Brush = SolidColor(Color.White),
-    progressBrush: Brush = SolidColor(Color.Blue),
+    colors: WaveformColors = waveformColors(),
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
     amplitudeType: AmplitudeType = AmplitudeType.AVG,
     spikeAnimationSpec: AnimationSpec<Float> = tween(500),
@@ -151,8 +150,10 @@ fun AmplitudeBarGraph(
 ) {
     val _progress = remember(progress) { progress.coerceIn(MIN_PROGRESS, MAX_PROGRESS) }
     val _spikeWidth = remember(spikeWidth) { spikeWidth.coerceIn(minSpikeWidthDp, maxSpikeWidthDp) }
-    val _spikePadding = remember(spikePadding) { spikePadding.coerceIn(minSpikePaddingDp, maxSpikePaddingDp) }
-    val _spikeRadius = remember(spikeRadius) { spikeRadius.coerceIn(minSpikeRadiusDp, maxSpikeRadiusDp) }
+    val _spikePadding =
+        remember(spikePadding) { spikePadding.coerceIn(minSpikePaddingDp, maxSpikePaddingDp) }
+    val _spikeRadius =
+        remember(spikeRadius) { spikeRadius.coerceIn(minSpikeRadiusDp, maxSpikeRadiusDp) }
     val _spikeTotalWidth = remember(spikeWidth, spikePadding) { _spikeWidth + _spikePadding }
     var canvasSize by remember { mutableStateOf(Size(0f, 0f)) }
     var spikes by remember { mutableFloatStateOf(0F) }
@@ -168,33 +169,27 @@ fun AmplitudeBarGraph(
         modifier = Modifier
             .fillMaxWidth()
             .requiredHeight(48.dp)
-            .pointerInteropFilter {
-                return@pointerInteropFilter when (it.action) {
-                    MotionEvent.ACTION_DOWN,
-                    MotionEvent.ACTION_MOVE -> {
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDrag = { _, _ -> },
+                    onDragStart = {
                         if (it.x in 0F..canvasSize.width) {
                             onProgressChange(it.x / canvasSize.width)
-                            true
-                        } else {
-                            false
                         }
-                    }
-
-                    MotionEvent.ACTION_UP -> {
+                    },
+                    onDragEnd = {
                         onProgressChangeFinished?.invoke()
-                        true
                     }
-
-                    else -> false
-                }
+                )
             }
-            .then(modifier)
+            .then(modifier),
+        contentDescription = ""
     ) {
         canvasSize = size
         spikes = size.width / _spikeTotalWidth.toPx()
         spikesAmplitudes.forEachIndexed { index, amplitude ->
             drawRoundRect(
-                brush = waveformBrush,
+                brush = SolidColor(colors.waveformColor),
                 topLeft = Offset(
                     x = index * _spikeTotalWidth.toPx(),
                     y = when (waveformAlignment) {
@@ -213,7 +208,7 @@ fun AmplitudeBarGraph(
 
             if (_progress != 0F) {
                 drawRoundRect(
-                    brush = progressBrush,
+                    brush =  SolidColor(colors.primaryProgressColor),
                     size = Size(
                         width = 2.dp.toPx(),
                         height = size.height

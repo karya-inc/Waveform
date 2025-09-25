@@ -1,6 +1,5 @@
 package com.daiatech.waveform.graphs
 
-import android.graphics.Paint
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -31,15 +30,14 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
@@ -53,8 +51,10 @@ import com.daiatech.waveform.minSpikeRadiusDp
 import com.daiatech.waveform.minSpikeWidthDp
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.WaveformAlignment
+import com.daiatech.waveform.models.WaveformColors
+import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.toDrawableAmplitudes
-import java.util.Locale
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 const val timeIntervalMs = 500
 const val spikeIntervalMs = 1000 / 20
@@ -71,7 +71,7 @@ const val timeIntervalSpikes = timeIntervalMs / spikeIntervalMs
  *
  * @param modifier Modifier applied to the root layout.
  * @param style Style used to draw waveform spikes (e.g., [Fill]).
- * @param waveformBrush Brush used to color the waveform spikes.
+ * @param colors Custom colors for waveform elements.
  * @param waveformAlignment Alignment of spikes relative to the graph height. Can be [WaveformAlignment.Top], [WaveformAlignment.Center], or [WaveformAlignment.Bottom].
  * @param amplitudeType Defines how to aggregate amplitude values, e.g., average or max, using [AmplitudeType].
  * @param spikeAnimationSpec Animation specification for spike height transitions.
@@ -89,7 +89,7 @@ const val timeIntervalSpikes = timeIntervalMs / spikeIntervalMs
 fun CenterPinnedAmplitudeBarGraph(
     modifier: Modifier = Modifier,
     style: DrawStyle = Fill,
-    waveformBrush: Brush = SolidColor(Color.White),
+    colors: WaveformColors = waveformColors(),
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
     amplitudeType: AmplitudeType = AmplitudeType.AVG,
     spikeAnimationSpec: AnimationSpec<Float> = tween(500),
@@ -129,13 +129,8 @@ fun CenterPinnedAmplitudeBarGraph(
     }.map { animateFloatAsState(it, spikeAnimationSpec, label = "spike amplitudes").value }
 
     val canvasWidth = remember(spikesCount, _spikeTotalWidth) { (spikesCount * (_spikeTotalWidth)) }
-    val textPaint = remember {
-        Paint().apply {
-            color = android.graphics.Color.WHITE
-            textAlign = Paint.Align.CENTER
-            textSize = with(density) { 12.sp.toPx() }
-        }
-    }
+    val textMeasurer = rememberTextMeasurer()
+    val markersTextStyle = remember { TextStyle(fontSize = 12.sp, color = colors.markerColor) }
 
     var screenWidthDp by remember { mutableStateOf(0.dp) }
     var canvasOffset by remember(screenWidthDp) { mutableStateOf(screenWidthDp / 2) }
@@ -173,7 +168,7 @@ fun CenterPinnedAmplitudeBarGraph(
                     .width(2.dp)
                     .height(graphBarHeight)
                     .clip(CircleShape)
-                    .background(Color.Red)
+                    .background(colors.primaryProgressColor)
                     .align(Alignment.TopCenter)
             )
             Row(
@@ -194,7 +189,7 @@ fun CenterPinnedAmplitudeBarGraph(
                     spikesAmplitudes.forEachIndexed { index, amplitude ->
                         val x = index * (_spikeTotalWidth.toPx())
                         drawRoundRect(
-                            brush = waveformBrush,
+                            brush = SolidColor(colors.waveformColor),
                             topLeft = Offset(
                                 x = x,
                                 y = when (waveformAlignment) {
@@ -214,21 +209,24 @@ fun CenterPinnedAmplitudeBarGraph(
                         // Draw vertical line and time label every 0.5 seconds
                         if (index % timeIntervalSpikes == 0) {
                             val timeInSeconds = (index * spikeIntervalMs) / 1000f
+                            val tm = textMeasurer.measure(timeInSeconds.toString(), markersTextStyle)
                             if (timeInSeconds <= durationMs / 1000f) {
                                 // Draw vertical line
                                 drawLine(
-                                    color = Color.Gray,
+                                    color = colors.markerColor,
                                     start = Offset(x = x, y = 0f),
                                     end = Offset(x = x, y = graphBarHeight.toPx()),
                                     strokeWidth = 1.dp.toPx()
                                 )
-
-                                // Draw time label
-                                drawContext.canvas.nativeCanvas.drawText(
-                                    String.format(Locale.US, "%.1fs", timeInSeconds),
-                                    x,
-                                    graphBarHeight.toPx() + 8.dp.toPx(),
-                                    textPaint
+                                drawText(
+                                    textMeasurer = textMeasurer,
+                                    style = markersTextStyle,
+                                    text = timeInSeconds.toString(),
+                                    topLeft = Offset(x, graphBarHeight.toPx()),
+                                    size = Size(
+                                        width = tm.size.width.toFloat(),
+                                        height = tm.size.height.toFloat()
+                                    )
                                 )
                             }
                         }
