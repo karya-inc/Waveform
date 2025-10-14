@@ -57,12 +57,10 @@ kotlin {
                 implementation(compose.materialIconsExtended)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
-                // implementation(libs.androidx.lifecycle.runtimeCompose)
             }
         }
 
         androidMain {
-            kotlin.srcDir("src/main/java")
             dependencies {
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.media3.exoplayer)
