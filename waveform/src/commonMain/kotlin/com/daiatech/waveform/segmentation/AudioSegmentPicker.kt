@@ -5,28 +5,34 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -49,9 +55,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.MIN_SPIKE_HEIGHT
+import com.daiatech.waveform.Res
+import com.daiatech.waveform.ic_pause
+import com.daiatech.waveform.ic_play_arrow
 import com.daiatech.waveform.maxSpikePaddingDp
 import com.daiatech.waveform.maxSpikeRadiusDp
 import com.daiatech.waveform.maxSpikeWidthDp
+import com.daiatech.waveform.millisecondsToMmSs
 import com.daiatech.waveform.minSpikePaddingDp
 import com.daiatech.waveform.minSpikeRadiusDp
 import com.daiatech.waveform.minSpikeWidthDp
@@ -60,9 +70,13 @@ import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.safeDiv
+import com.daiatech.waveform.segmentation.component.SpeedButton
+import com.daiatech.waveform.segmentation.component.ZoomButton
 import com.daiatech.waveform.toDrawableAmplitudes
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.pow
 
 /**
@@ -97,7 +111,6 @@ private val markerFontSize: TextUnit = 12.sp
  *
  * Typically used for visualizing audio input or playback.
  *
- * @param modifier Modifier applied to the root layout.
  * @param colors Custom colors for waveform elements.
  * @param waveformAlignment Alignment of spikes relative to the graph height.
  * @param spikeAnimationSpec Animation specification for spike height transitions.
@@ -109,13 +122,21 @@ private val markerFontSize: TextUnit = 12.sp
  */
 @Composable
 fun AudioSegmentPicker(
-    modifier: Modifier = Modifier,
     colors: WaveformColors = waveformColors(),
+    amplitudes: List<Int>,
+    progressMs: Long,
+    durationMs: Long,
+    isPlaying: Boolean,
+    enableZoomIn: Boolean,
+    enableZoomOut: Boolean,
+    speed: Float,
+    togglePlayback: () -> Unit,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+    updateSpeed: (Float) -> Unit,
+    availableSpeeds: List<Float> = listOf(0.25f, 0.5f, 1f),
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
     spikeAnimationSpec: AnimationSpec<Float> = tween(500),
-    amplitudes: List<Int>,
-    progressMs: Long = 0L,
-    durationMs: Long,
     timestampMs: Long = 100,
     spikeCountPerTimestampMs: Int = 10,
 ) {
@@ -201,101 +222,166 @@ fun AudioSegmentPicker(
             }
         }
 
-    Row(
-        modifier = modifier
+    Column(
+        modifier = Modifier
             .fillMaxWidth()
             .background(colors.containerColor)
-            .onGloballyPositioned { layoutCoordinates ->
-                screenWidthDp = with(density) { layoutCoordinates.size.width.toDp() }
-            }
-            .drawWithContent {
-                drawContent()
-                drawRect(
-                    brush = Brush.linearGradient(
-                        listOf(colors.fadeColor, Color.Transparent)
-                    ),
-                    topLeft = Offset(0f, 0f),
-                    size = Size(size.width / 2, size.height)
-                )
-                drawPath(
-                    path = centerMarkerPath,
-                    brush = SolidColor(colors.primaryProgressColor)
-                )
-            }
     ) {
-        Canvas(
-            Modifier
-                .width(canvasWidthDp)
-                .height(layout.canvasHeight)
-                .offset(x = canvasOffset)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .onGloballyPositioned { layoutCoordinates ->
+                    screenWidthDp = with(density) { layoutCoordinates.size.width.toDp() }
+                }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(
+                        brush = Brush.linearGradient(
+                            listOf(colors.fadeColor, Color.Transparent)
+                        ),
+                        topLeft = Offset(0f, 0f),
+                        size = Size(size.width / 2, size.height)
+                    )
+                    drawPath(
+                        path = centerMarkerPath,
+                        brush = SolidColor(colors.primaryProgressColor)
+                    )
+                }
         ) {
-            val spikeWidthPx = spikeWidth.toPx()
-            val spikeTotalWidthPx = spikeTotalWidth.toPx()
-            val spikeRadiusPx = spikeRadius.toPx()
-            val cornerRadius = CornerRadius(spikeRadiusPx, spikeRadiusPx)
-            val graphHeight = MIN_GRAPH_HEIGHT.toPx()
+            Canvas(
+                Modifier
+                    .width(canvasWidthDp)
+                    .height(layout.canvasHeight)
+                    .offset(x = canvasOffset)
+            ) {
+                val spikeWidthPx = spikeWidth.toPx()
+                val spikeTotalWidthPx = spikeTotalWidth.toPx()
+                val spikeRadiusPx = spikeRadius.toPx()
+                val cornerRadius = CornerRadius(spikeRadiusPx, spikeRadiusPx)
+                val graphHeight = MIN_GRAPH_HEIGHT.toPx()
 
-            drawableAmplitudes.forEachIndexed { index, amplitude ->
-                val x = index * spikeTotalWidthPx
+                drawableAmplitudes.forEachIndexed { index, amplitude ->
+                    val x = index * spikeTotalWidthPx
 
-                // Draw waveform spike
-                val spikeY = when (waveformAlignment) {
-                    WaveformAlignment.Top -> 0f
-                    WaveformAlignment.Bottom -> graphHeight - amplitude
-                    WaveformAlignment.Center -> (graphHeight - amplitude) / 2f
-                } + layout.spikesOffset
+                    // Draw waveform spike
+                    val spikeY = when (waveformAlignment) {
+                        WaveformAlignment.Top -> 0f
+                        WaveformAlignment.Bottom -> graphHeight - amplitude
+                        WaveformAlignment.Center -> (graphHeight - amplitude) / 2f
+                    } + layout.spikesOffset
 
-                drawRoundRect(
-                    brush = SolidColor(colors.waveformColor),
-                    topLeft = Offset(x, spikeY),
-                    size = Size(spikeWidthPx, amplitude),
-                    cornerRadius = cornerRadius,
-                    style = Fill
-                )
-
-                // Draw timestamp markers
-                if (index % spikeCountPerTimestampMs == 0) {
                     drawRoundRect(
-                        brush = SolidColor(colors.markerColor),
-                        topLeft = Offset(x, layout.markerY),
-                        size = Size(spikeWidthPx, layout.markerHeight),
+                        brush = SolidColor(colors.waveformColor),
+                        topLeft = Offset(x, spikeY),
+                        size = Size(spikeWidthPx, amplitude),
                         cornerRadius = cornerRadius,
                         style = Fill
                     )
 
-                    val timeInSeconds = (index * timestampMs) / (spikeCountPerTimestampMs * 1000f)
-                    val timeText = "${timeInSeconds}s"
-                    val tm = textMeasurer.measure(timeText, markersTextStyle)
-                    val y = if (index % (2 * spikeCountPerTimestampMs) == 0) {
-                        layout.evenMarkerY
-                    } else {
-                        layout.oddMarkerY
-                    }
-
-                    drawText(
-                        textMeasurer = textMeasurer,
-                        style = markersTextStyle,
-                        text = timeInSeconds.toString(),
-                        topLeft = Offset(x - (tm.size.width.toFloat() / 2), y),
-                        size = Size(
-                            width = tm.size.width.toFloat(),
-                            height = tm.size.height.toFloat()
+                    // Draw timestamp markers
+                    if (index % spikeCountPerTimestampMs == 0) {
+                        drawRoundRect(
+                            brush = SolidColor(colors.markerColor),
+                            topLeft = Offset(x, layout.markerY),
+                            size = Size(spikeWidthPx, layout.markerHeight),
+                            cornerRadius = cornerRadius,
+                            style = Fill
                         )
+
+                        val timeInSeconds =
+                            (index * timestampMs) / (spikeCountPerTimestampMs * 1000f)
+                        val timeText = "${timeInSeconds}s"
+                        val tm = textMeasurer.measure(timeText, markersTextStyle)
+                        val y = if (index % (2 * spikeCountPerTimestampMs) == 0) {
+                            layout.evenMarkerY
+                        } else {
+                            layout.oddMarkerY
+                        }
+
+                        drawText(
+                            textMeasurer = textMeasurer,
+                            style = markersTextStyle,
+                            text = timeInSeconds.toString(),
+                            topLeft = Offset(x - (tm.size.width.toFloat() / 2), y),
+                            size = Size(
+                                width = tm.size.width.toFloat(),
+                                height = tm.size.height.toFloat()
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Speed", color = colors.waveformColor)
+                Spacer(Modifier.height(8.dp))
+                SpeedButton(
+                    availableSpeeds = availableSpeeds,
+                    selectedSpeedIdx = availableSpeeds.indexOf(speed),
+                    onSpeedUpdate = {
+                        val speed = availableSpeeds.getOrNull(it)
+                        if (speed != null) {
+                            updateSpeed(speed)
+                        }
+                    },
+                    containerColor = Color.White.copy(0.1f),
+                    modifier = Modifier.height(48.dp).fillMaxWidth()
+                )
+            }
+
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .size(48.dp)
+                        .background(colors.waveformColor)
+                        .clickable { togglePlayback() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource((if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow)),
+                        contentDescription = null,
+                        tint = colors.containerColor
                     )
                 }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "${millisecondsToMmSs(progressMs)}/${millisecondsToMmSs(durationMs)}",
+                    color = colors.waveformColor
+                )
+            }
+
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Zoom", color = colors.waveformColor)
+                Spacer(Modifier.height(8.dp))
+                ZoomButton(
+                    modifier = Modifier.height(48.dp).fillMaxWidth(),
+                    onZoomIn = onZoomIn,
+                    onZoomOut = onZoomOut,
+                    enableZoomOut = enableZoomOut,
+                    enableZoomIn = enableZoomIn
+                )
             }
         }
     }
 }
-
 
 @Composable
 fun AudioSegmentPickerPreview(
     colors: WaveformColors = waveformColors()
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val progressJobRef = remember { mutableStateOf<Job?>(null) }
     var progressMs by remember { mutableLongStateOf(0) }
-    var zoom by remember { mutableFloatStateOf(3f) }
+    var isPlaying by remember { mutableStateOf(false) }
+    var zoom by remember { mutableIntStateOf(1) }
+    var speed by remember { mutableFloatStateOf(1f) }
+
     Surface(color = colors.containerColor) {
         Column {
             AudioSegmentPicker(
@@ -322,45 +408,41 @@ fun AudioSegmentPickerPreview(
                 ),
                 durationMs = 4000,
                 progressMs = progressMs,
-                timestampMs = ((500 / 2.0.pow((zoom - 1).toDouble())).toLong())
-                // 1 - 500 (500/2^(1-1))
-                // 2 - 250 (500/2^(2-1))
-                // 3 - 125 (500/2^(3-1))
-                // 4 - 62.50 (500/2^(4-1))
-                // 5 - 31.25 (500/2^(5-1))
-            )
-            Spacer(Modifier.height(8.dp))
-            Slider(
-                value = zoom,
-                onValueChange = { zoom = it },
-                steps = 3,
-                valueRange = 1f..5f,
-                colors = SliderDefaults.colors(
-                    thumbColor = colors.markerColor,
-                    activeTrackColor = colors.markerColor,
-                    inactiveTrackColor = colors.markerColor.copy(alpha = 0.3f),
-                    activeTickColor = colors.markerColor
-                )
-            )
-            Text(text = zoom.toString(), color = colors.markerColor)
-            Button(
-                onClick = {
-                    coroutineScope.launch {
-                        while (progressMs < 4000L) {
-                            progressMs += 100L
-                            delay(100)
+                timestampMs = ((500 / 2.0.pow((zoom - 1).toDouble())).toLong()),
+                isPlaying = isPlaying,
+                togglePlayback = {
+                    if (isPlaying) {
+                        progressJobRef.value?.cancel()
+                        isPlaying = false
+                    } else {
+                        isPlaying = true
+                        progressJobRef.value = coroutineScope.launch {
+                            while (progressMs < 4000L && isPlaying) {
+                                progressMs += (100.times(speed)).toLong()
+                                delay(100)
+                            }
+                            if (progressMs >= 4000L) {
+                                progressMs = 0L
+                            }
+                            isPlaying = false
                         }
-                        progressMs = 0L
                     }
                 },
-                enabled = progressMs == 0L || progressMs == 4000L,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.buttonColor,
-                    disabledContainerColor = colors.buttonColor.copy(alpha = 0.3f)
-                )
-            ) {
-                Text("Start Progress")
-            }
+                onZoomIn = {
+                    if (zoom < 5) {
+                        zoom += 1
+                    }
+                },
+                onZoomOut = {
+                    if (zoom > 1) {
+                        zoom -= 1
+                    }
+                },
+                enableZoomOut = zoom != 1,
+                enableZoomIn = zoom != 5,
+                updateSpeed = { speed = it },
+                speed = speed
+            )
         }
     }
 }
