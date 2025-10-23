@@ -114,3 +114,11 @@ internal fun toSecsAndMs(milliseconds: Long): String {
     val fractionalPart = hundredths % 100
     return "$wholePart.${fractionalPart.toString().padStart(2, '0')}"
 }
+
+internal infix fun <T> List<T>.times(n: Int) : List<T> {
+    val result = mutableListOf<T>()
+    repeat(n) {
+        result.addAll(this)
+    }
+    return result
+}

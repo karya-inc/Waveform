@@ -24,7 +24,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -37,7 +36,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.times
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.models.WaveformAlignment
@@ -45,6 +43,7 @@ import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.component.SegmentPickerToolbar
+import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -55,7 +54,6 @@ import kotlinx.coroutines.launch
  * @param waveformAlignment Alignment of spikes relative to the graph height.
  * @param spikeAnimationSpec Animation specification for spike height transitions.
  * @param progressMs Current time progress in milliseconds.
- * @param spikeCountPerTimestampMs
  */
 @Composable
 fun AudioSegmentPicker(
@@ -73,7 +71,7 @@ fun AudioSegmentPicker(
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
 
-    val markersTextStyle = remember(markerFontSize, colors.markerColor) {
+    val markersTextStyle = remember {
         TextStyle(fontSize = markerFontSize, color = colors.markerColor)
     }
 
@@ -187,7 +185,7 @@ fun AudioSegmentPicker(
                         drawText(
                             textMeasurer = textMeasurer,
                             style = markersTextStyle,
-                            text = timeInSeconds.toString(),
+                            text = timeText,
                             topLeft = Offset(amplitude.first.x - (tm.size.width.toFloat() / 2), y),
                             size = Size(
                                 width = tm.size.width.toFloat(),
@@ -229,27 +227,8 @@ fun AudioSegmentPickerPreview(
     var speed by remember { mutableFloatStateOf(1f) }
 
     val state = rememberSegmentPickerState(
-        amplitudes = listOf(
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20,
-            100, 200, 300, 500, 100, 20
-        ),
-        durationMs = 4000
+        amplitudes = listOf(100, 200, 300, 500, 100, 20).times(20),
+        durationMs = 8000
     )
 
     Surface(color = colors.containerColor) {
@@ -266,11 +245,11 @@ fun AudioSegmentPickerPreview(
                     } else {
                         isPlaying = true
                         progressJobRef.value = coroutineScope.launch {
-                            while (progressMs < 4000L && isPlaying) {
+                            while (progressMs < 8000L && isPlaying) {
                                 progressMs += (100.times(speed)).toLong()
                                 delay(100)
                             }
-                            if (progressMs >= 4000L) {
+                            if (progressMs >= 8000L) {
                                 progressMs = 0L
                             }
                             isPlaying = false
