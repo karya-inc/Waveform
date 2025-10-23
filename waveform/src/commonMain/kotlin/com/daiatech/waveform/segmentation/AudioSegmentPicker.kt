@@ -70,6 +70,7 @@ import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.safeDiv
+import com.daiatech.waveform.segmentation.component.SegmentPickerToolbar
 import com.daiatech.waveform.segmentation.component.SpeedButton
 import com.daiatech.waveform.segmentation.component.ZoomButton
 import com.daiatech.waveform.toDrawableAmplitudes
@@ -312,62 +313,21 @@ fun AudioSegmentPicker(
                 }
             }
         }
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Speed", color = colors.waveformColor)
-                Spacer(Modifier.height(8.dp))
-                SpeedButton(
-                    availableSpeeds = availableSpeeds,
-                    selectedSpeedIdx = availableSpeeds.indexOf(speed),
-                    onSpeedUpdate = {
-                        val speed = availableSpeeds.getOrNull(it)
-                        if (speed != null) {
-                            updateSpeed(speed)
-                        }
-                    },
-                    containerColor = Color.White.copy(0.1f),
-                    modifier = Modifier.height(48.dp).fillMaxWidth()
-                )
-            }
 
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .size(48.dp)
-                        .background(colors.waveformColor)
-                        .clickable { togglePlayback() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource((if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow)),
-                        contentDescription = null,
-                        tint = colors.containerColor
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "${millisecondsToMmSs(progressMs)}/${millisecondsToMmSs(durationMs)}",
-                    color = colors.waveformColor
-                )
-            }
-
-            Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Zoom", color = colors.waveformColor)
-                Spacer(Modifier.height(8.dp))
-                ZoomButton(
-                    modifier = Modifier.height(48.dp).fillMaxWidth(),
-                    onZoomIn = onZoomIn,
-                    onZoomOut = onZoomOut,
-                    enableZoomOut = enableZoomOut,
-                    enableZoomIn = enableZoomIn
-                )
-            }
-        }
+        SegmentPickerToolbar(
+            colors = colors,
+            progressMs = progressMs,
+            durationMs = durationMs,
+            isPlaying = isPlaying,
+            enableZoomIn = enableZoomIn,
+            enableZoomOut = enableZoomOut,
+            speed = speed,
+            togglePlayback = togglePlayback,
+            onZoomIn = onZoomIn,
+            onZoomOut = onZoomOut,
+            updateSpeed = updateSpeed,
+            availableSpeeds = availableSpeeds
+        )
     }
 }
 
