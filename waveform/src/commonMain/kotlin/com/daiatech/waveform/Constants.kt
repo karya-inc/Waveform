@@ -23,7 +23,7 @@ internal const val MAX_PROGRESS: Float = 1F
 
 internal const val MIN_SPIKE_HEIGHT: Float = 0.5f
 
-internal const val ON_TAP_ADJUSTMENT_MS = 10
-internal const val ON_LONG_TAP_ADJUSTMENT_MS = 50
+internal const val ON_TAP_ADJUSTMENT_MS = 50
+internal const val ON_LONG_TAP_ADJUSTMENT_MS = 10
 
 const val AUDIO_PLAYER_REFRESH_RATE_MS = 10L
