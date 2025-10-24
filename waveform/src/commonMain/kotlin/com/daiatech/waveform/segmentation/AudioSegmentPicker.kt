@@ -4,6 +4,7 @@ import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -68,6 +70,7 @@ fun AudioSegmentPicker(
     togglePlayback: () -> Unit,
     isSegmentPlaying: Boolean,
     toggleSegmentPlayback: () -> Unit,
+    seek: (Long) -> Unit,
     speed: Float,
     updateSpeed: (Float) -> Unit,
     availableSpeeds: List<Float> = listOf(0.25f, 0.5f, 1f),
@@ -87,6 +90,7 @@ fun AudioSegmentPicker(
     val durationMs = state.durationMs
     val canvasWidthDp = state.canvasWidthDp.value
     val spikeWidthPx = state.spikeWidthPx
+    val spikeTotalWidthPx = state.spikeTotalWidthPx
     val layout = state.layout
     val spikeCornerRadius = state.spikeCornerRadius
     val windowCornerRadius = state.windowCornerRadius
@@ -137,6 +141,25 @@ fun AudioSegmentPicker(
                 .fillMaxWidth()
                 .onGloballyPositioned { layoutCoordinates ->
                     screenWidth = layoutCoordinates.size.width
+                }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onHorizontalDrag = { change, dragAmount ->
+                            /**
+                             * Seek duration
+                             * = (duration/waveformWidth) * dragAmount
+                             * = (duration/(spikeTotalWidthPx * totalSpikesCount)) * dragAmount
+                             * = (duration/(spikeTotalWidth * (duration * spikeCountPerTimestampMp)/TimestampMs) * dragAmount
+                             * = (timestampMp * dragAmount)/(spikeTotalWidth * spikeCountPerTimestampMp)
+                             *
+                             * Also, negative dragAmount means left drag which means positive seek
+                             */
+                            val seekBy = ((timestampMs * dragAmount) /
+                                    (spikeTotalWidthPx * spikeCountPerTimestampMs)).toLong()
+                            seek(-seekBy) // left swipe means seek forward and conversely
+                            change.consume()
+                        }
+                    )
                 }
                 .drawWithContent {
                     drawContent()
@@ -336,6 +359,10 @@ fun AudioSegmentPickerPreview(
                             isPlaying = false
                         }
                     }
+                },
+                seek = { it ->
+                    progressJobRef.value?.cancel()
+                    progressMs = (progressMs + it).coerceIn(0, 8000)
                 },
                 updateSpeed = { speed = it },
                 speed = speed,
