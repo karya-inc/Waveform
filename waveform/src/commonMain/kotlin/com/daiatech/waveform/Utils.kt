@@ -115,6 +115,18 @@ internal fun toSecsAndMs(milliseconds: Long): String {
     return "$wholePart.${fractionalPart.toString().padStart(2, '0')}"
 }
 
+/**
+ * Converts milliseconds to MM:ss:mmm format
+ */
+fun toMinSecMs(milliseconds: Long): String {
+    val secs = milliseconds / 1000
+    val mins = secs / 60
+    val remainingSecs = secs % 60
+    val remainingMs = milliseconds % 1000
+
+    return "${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}:${remainingMs.toString().padStart(3, '0')}"
+}
+
 internal infix fun <T> List<T>.times(n: Int) : List<T> {
     val result = mutableListOf<T>()
     repeat(n) {

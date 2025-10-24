@@ -42,10 +42,9 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.times
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.models.WaveformAlignment
-import com.daiatech.waveform.models.WaveformColors
-import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.safeDiv
-import com.daiatech.waveform.segmentation.component.SegmentPickerToolbar
+import com.daiatech.waveform.segmentation.component.PLaybackToolbar
+import com.daiatech.waveform.segmentation.component.SegmentToolbar
 import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -61,7 +60,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AudioSegmentPicker(
     state: SegmentPickerState,
-    colors: WaveformColors = waveformColors(),
+    colors: SegmentationColors = segmentationColors(),
     progressMs: Long,
     isPlaying: Boolean,
     speed: Float,
@@ -92,6 +91,7 @@ fun AudioSegmentPicker(
     val timestampMs = state.timestampMs.value
     val drawableAmplitudes = state.drawableAmplitudes.value
     val window = state.window.value
+    val segment = state.segment.value
     val spikeCountPerTimestampMs = state.spikeCountPerTimestampMs
 
     val canvasOffset by animateDpAsState(
@@ -127,7 +127,7 @@ fun AudioSegmentPicker(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(colors.containerColor)
+            .background(colors.background)
     ) {
         Row(
             modifier = Modifier
@@ -146,7 +146,7 @@ fun AudioSegmentPicker(
                     )
                     drawPath(
                         path = centerMarkerPath,
-                        brush = SolidColor(colors.primaryProgressColor)
+                        brush = SolidColor(colors.playheadIndicator)
                     )
                 }
         ) {
@@ -200,7 +200,7 @@ fun AudioSegmentPicker(
 
                 window?.let { window ->
                     drawRoundRect(
-                        brush = SolidColor(colors.activeWindowColor),
+                        brush = SolidColor(colors.selectionOutline),
                         topLeft = window.first,
                         size = window.second,
                         cornerRadius = windowCornerRadius,
@@ -210,7 +210,7 @@ fun AudioSegmentPicker(
             }
         }
 
-        SegmentPickerToolbar(
+        PLaybackToolbar(
             colors = colors,
             progressMs = progressMs,
             durationMs = durationMs,
@@ -224,12 +224,24 @@ fun AudioSegmentPicker(
             updateSpeed = updateSpeed,
             availableSpeeds = availableSpeeds
         )
+
+        segment?.let { segment ->
+            SegmentToolbar(
+                modifier = Modifier.fillMaxWidth(),
+                segment = segment,
+                isPlaying = false,
+                togglePlayback = {},
+                moveStart = { by -> state.addToStart(by) },
+                moveEnd = { by -> state.addToEnd(by) },
+                colors = colors
+            )
+        }
     }
 }
 
 @Composable
 fun AudioSegmentPickerPreview(
-    colors: WaveformColors = waveformColors()
+    colors: SegmentationColors = segmentationColors()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val progressJobRef = remember { mutableStateOf<Job?>(null) }
@@ -245,7 +257,7 @@ fun AudioSegmentPickerPreview(
         minimumSegmentMs = 500,
     )
 
-    Surface(color = colors.containerColor) {
+    Surface(color = colors.background) {
         Column {
             AudioSegmentPicker(
                 state = state,

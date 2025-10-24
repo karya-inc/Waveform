@@ -24,14 +24,14 @@ import com.daiatech.waveform.Res
 import com.daiatech.waveform.ic_pause
 import com.daiatech.waveform.ic_play_arrow
 import com.daiatech.waveform.millisecondsToMmSs
-import com.daiatech.waveform.models.WaveformColors
-import com.daiatech.waveform.models.waveformColors
+import com.daiatech.waveform.segmentation.SegmentationColors
+import com.daiatech.waveform.segmentation.segmentationColors
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun SegmentPickerToolbar(
+fun PLaybackToolbar(
     modifier: Modifier = Modifier,
-    colors: WaveformColors,
+    colors: SegmentationColors,
     progressMs: Long,
     durationMs: Long,
     isPlaying: Boolean,
@@ -49,7 +49,7 @@ fun SegmentPickerToolbar(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Speed", color = colors.waveformColor)
+            Text("Speed", color = colors.contentPrimary)
             Spacer(Modifier.height(8.dp))
             SpeedButton(
                 availableSpeeds = availableSpeeds,
@@ -78,7 +78,7 @@ fun SegmentPickerToolbar(
                 Icon(
                     painter = painterResource((if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow)),
                     contentDescription = null,
-                    tint = colors.containerColor
+                    tint = colors.background
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -103,9 +103,9 @@ fun SegmentPickerToolbar(
 }
 
 @Composable
-fun SegmentPickerToolbarPreview() {
-    SegmentPickerToolbar(
-        colors = waveformColors(),
+fun PLaybackToolbarPreview() {
+    PLaybackToolbar(
+        colors = segmentationColors(),
         progressMs = 30000L,
         durationMs = 60000L,
         isPlaying = false,

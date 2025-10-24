@@ -209,7 +209,8 @@ fun CenterPinnedAmplitudeBarGraph(
                         // Draw vertical line and time label every 0.5 seconds
                         if (index % timeIntervalSpikes == 0) {
                             val timeInSeconds = (index * spikeIntervalMs) / 1000f
-                            val tm = textMeasurer.measure(timeInSeconds.toString(), markersTextStyle)
+                            val tm =
+                                textMeasurer.measure(timeInSeconds.toString(), markersTextStyle)
                             if (timeInSeconds <= durationMs / 1000f) {
                                 // Draw vertical line
                                 drawLine(
