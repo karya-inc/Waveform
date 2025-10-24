@@ -6,9 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -329,8 +331,8 @@ fun AudioSegmentPickerPreview(
         minimumSegmentMs = 500,
     )
 
-    Surface(color = colors.background) {
-        Column {
+    Surface {
+        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom) {
             AudioSegmentPicker(
                 state = state,
                 colors = colors,
@@ -397,7 +399,7 @@ fun AudioSegmentPickerPreview(
                 }
             )
 
-            Row(Modifier.fillMaxWidth().padding(8.dp)) {
+            Row(Modifier.fillMaxWidth().background(colors.background).padding(8.dp)) {
                 AnimatedVisibility(visible = state.segment.value == null) {
                     KButton(
                         content = "Add Segment",
