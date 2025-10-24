@@ -1,5 +1,6 @@
 package com.daiatech.waveform.segmentation
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -7,11 +8,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +50,9 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
+import com.daiatech.karya.ui.buttons.ButtonVariation
+import com.daiatech.karya.ui.buttons.KButton
+import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
@@ -145,17 +154,7 @@ fun AudioSegmentPicker(
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
-                            /**
-                             * Seek duration
-                             * = (duration/waveformWidth) * dragAmount
-                             * = (duration/(spikeTotalWidthPx * totalSpikesCount)) * dragAmount
-                             * = (duration/(spikeTotalWidth * (duration * spikeCountPerTimestampMp)/TimestampMs) * dragAmount
-                             * = (timestampMp * dragAmount)/(spikeTotalWidth * spikeCountPerTimestampMp)
-                             *
-                             * Also, negative dragAmount means left drag which means positive seek
-                             */
-                            val seekBy = ((timestampMs * dragAmount) /
-                                    (spikeTotalWidthPx * spikeCountPerTimestampMs)).toLong()
+                            val seekBy = state.pxToDuration(dragAmount)
                             seek(-seekBy) // left swipe means seek forward and conversely
                             change.consume()
                         }
@@ -398,8 +397,36 @@ fun AudioSegmentPickerPreview(
                 }
             )
 
-            Button(onClick = { state.addSegment(progressMs) }) {
-                Text("Add Segment")
+            Row(Modifier.fillMaxWidth().padding(8.dp)) {
+                AnimatedVisibility(visible = state.segment.value == null) {
+                    KButton(
+                        content = "Add Segment",
+                        buttonVariation = ButtonVariation.PrimaryButtonRegular,
+                        onClick = { state.addSegment(progressMs) }
+                    )
+                }
+
+                AnimatedVisibility(visible = state.segment.value != null) {
+                    Row(Modifier.fillMaxWidth()) {
+                        KIconButton(
+                            onClick = { state.removeSegment() },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = null
+                                )
+                            },
+                            buttonVariation = ButtonVariation.IconSecondaryButtonRegular
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        KButton(
+                            modifier = Modifier.weight(1f),
+                            content = "Submit Segment",
+                            buttonVariation = ButtonVariation.PrimaryButtonRegular,
+                            onClick = { }
+                        )
+                    }
+                }
             }
         }
     }
