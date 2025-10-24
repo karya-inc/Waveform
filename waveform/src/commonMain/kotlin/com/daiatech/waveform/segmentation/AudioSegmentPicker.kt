@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -31,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Fill
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -83,11 +86,13 @@ fun AudioSegmentPicker(
     val spikeWidthPx = state.spikeWidthPx
     val layout = state.layout
     val spikeCornerRadius = state.spikeCornerRadius
+    val windowCornerRadius = state.windowCornerRadius
     val enableZoomIn = state.enableZoomIn.value
     val enableZoomOut = state.enableZoomOut.value
     val timestampMs = state.timestampMs.value
     val drawableAmplitudes = state.drawableAmplitudes.value
-
+    val window = state.window.value
+    val spikeCountPerTimestampMs = state.spikeCountPerTimestampMs
 
     val canvasOffset by animateDpAsState(
         targetValue = screenWidthDp / 2 - ((progressMs.toFloat() safeDiv durationMs.toFloat())
@@ -151,8 +156,6 @@ fun AudioSegmentPicker(
                     .height(layout.canvasHeight)
                     .offset(canvasOffset)
             ) {
-
-
                 drawableAmplitudes.forEachIndexed { index, amplitude ->
                     drawRoundRect(
                         brush = SolidColor(colors.waveformColor),
@@ -194,16 +197,26 @@ fun AudioSegmentPicker(
                         )
                     }
                 }
+
+                window?.let { window ->
+                    drawRoundRect(
+                        brush = SolidColor(colors.activeWindowColor),
+                        topLeft = window.first,
+                        size = window.second,
+                        cornerRadius = windowCornerRadius,
+                        style = Stroke(spikeWidthPx)
+                    )
+                }
             }
         }
 
         SegmentPickerToolbar(
             colors = colors,
             progressMs = progressMs,
-            durationMs =durationMs,
+            durationMs = durationMs,
             isPlaying = isPlaying,
             enableZoomIn = enableZoomIn,
-            enableZoomOut =enableZoomOut,
+            enableZoomOut = enableZoomOut,
             speed = speed,
             togglePlayback = togglePlayback,
             onZoomIn = state::zoomIn,
@@ -228,7 +241,8 @@ fun AudioSegmentPickerPreview(
 
     val state = rememberSegmentPickerState(
         amplitudes = listOf(100, 200, 300, 500, 100, 20).times(20),
-        durationMs = 8000
+        durationMs = 8000,
+        minimumSegmentMs = 500,
     )
 
     Surface(color = colors.containerColor) {
@@ -259,6 +273,10 @@ fun AudioSegmentPickerPreview(
                 updateSpeed = { speed = it },
                 speed = speed
             )
+
+            Button(onClick = { state.addSegment(progressMs) }) {
+                Text("Add Segment")
+            }
         }
     }
 }
