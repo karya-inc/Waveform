@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowLeft
-import androidx.compose.material.icons.automirrored.outlined.ArrowRight
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -32,6 +31,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
+import com.daiatech.waveform.Res
+import com.daiatech.waveform.mdarrowforwardios
+import com.daiatech.waveform.mdarrowbackwardios
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.SegmentationColors
 import com.daiatech.waveform.segmentation.segmentationColors
@@ -42,6 +44,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SegmentToolbar(
@@ -139,7 +142,7 @@ private fun MoveHandleButtons(
                 .padding(8.dp)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowLeft,
+                painter = painterResource(Res.drawable.mdarrowbackwardios),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = contentColor
@@ -154,7 +157,7 @@ private fun MoveHandleButtons(
                 .padding(8.dp)
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowRight,
+                painter = painterResource(Res.drawable.mdarrowforwardios),
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = contentColor
