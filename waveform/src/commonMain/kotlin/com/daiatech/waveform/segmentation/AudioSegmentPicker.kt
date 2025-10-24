@@ -1,7 +1,6 @@
 package com.daiatech.waveform.segmentation
 
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -66,8 +65,10 @@ fun AudioSegmentPicker(
     colors: SegmentationColors = segmentationColors(),
     progressMs: Long,
     isPlaying: Boolean,
-    speed: Float,
     togglePlayback: () -> Unit,
+    isSegmentPlaying: Boolean,
+    toggleSegmentPlayback: () -> Unit,
+    speed: Float,
     updateSpeed: (Float) -> Unit,
     availableSpeeds: List<Float> = listOf(0.25f, 0.5f, 1f),
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
@@ -97,11 +98,10 @@ fun AudioSegmentPicker(
     val segment = state.segment.value
     val spikeCountPerTimestampMs = state.spikeCountPerTimestampMs
 
-    val canvasOffset by animateDpAsState(
-        targetValue = screenWidthDp / 2 - ((progressMs.toFloat() safeDiv durationMs.toFloat())
-            .coerceIn(0f, 1f)) * canvasWidthDp,
-        label = "canvasOffset"
-    )
+    val canvasOffset by derivedStateOf {
+        screenWidthDp / 2 - ((progressMs.toFloat() safeDiv durationMs.toFloat())
+            .coerceIn(0f, 1f)) * canvasWidthDp
+    }
 
     val centerMarkerPath = remember(screenWidth) {
         if (screenWidth == 0) return@remember Path()
@@ -109,7 +109,7 @@ fun AudioSegmentPicker(
         with(density) {
             val centerX = screenWidth / 2
             val vSpacing = verticalItemSpacing.toPx()
-            val spikeW = spikeWidthPx
+            val spikeW = spikeWidthPx / 2
             val totalHeight =
                 (vSpacing * 7 + MIN_GRAPH_HEIGHT.toPx() + 2 * markerFontSize.toPx())
 
@@ -231,8 +231,8 @@ fun AudioSegmentPicker(
             SegmentToolbar(
                 modifier = Modifier.fillMaxWidth(),
                 segment = segment,
-                isPlaying = false,
-                togglePlayback = {},
+                isPlaying = isSegmentPlaying,
+                togglePlayback = toggleSegmentPlayback,
                 moveStart = { by -> state.addToStart(by) },
                 moveEnd = { by -> state.addToEnd(by) },
                 colors = colors
@@ -298,6 +298,7 @@ fun AudioSegmentPickerPreview(
     // Keep playback related variables/methods out of state
     var progressMs by remember { mutableLongStateOf(0) }
     var isPlaying by remember { mutableStateOf(false) }
+    var isSegmentPlaying by remember { mutableStateOf(false) }
     var speed by remember { mutableFloatStateOf(1f) }
 
     val state = rememberSegmentPickerState(
@@ -314,6 +315,11 @@ fun AudioSegmentPickerPreview(
                 progressMs = progressMs,
                 isPlaying = isPlaying,
                 togglePlayback = {
+                    if (isSegmentPlaying) {
+                        progressJobRef.value?.cancel()
+                        isSegmentPlaying = false
+                    }
+
                     if (isPlaying) {
                         progressJobRef.value?.cancel()
                         isPlaying = false
@@ -321,8 +327,8 @@ fun AudioSegmentPickerPreview(
                         isPlaying = true
                         progressJobRef.value = coroutineScope.launch {
                             while (progressMs < 8000L && isPlaying) {
-                                progressMs += (100.times(speed)).toLong()
-                                delay(100)
+                                progressMs += (50.times(speed)).toLong()
+                                delay(50)
                             }
                             if (progressMs >= 8000L) {
                                 progressMs = 0L
@@ -332,7 +338,37 @@ fun AudioSegmentPickerPreview(
                     }
                 },
                 updateSpeed = { speed = it },
-                speed = speed
+                speed = speed,
+                isSegmentPlaying = isSegmentPlaying,
+                toggleSegmentPlayback = {
+                    if (isPlaying) {
+                        progressJobRef.value?.cancel()
+                        isPlaying = false
+                    }
+
+                    if (isSegmentPlaying) {
+                        progressJobRef.value?.cancel()
+                        isSegmentPlaying = false
+                    } else {
+                        val segment = state.segment.value
+                        if (segment != null) {
+                            println("Segment snapshot is not null")
+                            isSegmentPlaying = true
+                            progressJobRef.value?.cancel()
+                            progressMs = segment.start
+                            progressJobRef.value = coroutineScope.launch {
+                                while (progressMs < segment.end && isSegmentPlaying) {
+                                    progressMs += (50.times(speed)).toLong()
+                                    delay(50)
+                                }
+                                if (progressMs >= segment.end) {
+                                    progressMs = segment.start
+                                }
+                                isSegmentPlaying = false
+                            }
+                        }
+                    }
+                }
             )
 
             Button(onClick = { state.addSegment(progressMs) }) {
