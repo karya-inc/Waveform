@@ -77,10 +77,10 @@ compose.resources {
 }
 
 group = "io.github.karya-inc"
-version = "0.0.1"
+version = "0.0.3"
 
 mavenPublishing {
-    val artifactId = "karya-ui"
+    val artifactId = "waveform"
     publishToMavenCentral(true)
     signAllPublications()
 
@@ -92,7 +92,7 @@ mavenPublishing {
 
     pom {
         name.set(artifactId)
-        description.set("Compose multiplatform Karua-UI library")
+        description.set("A Jetpack Compose library to display various audio waveforms")
         url.set("https://github.com/karya-inc/Waveform.git")
 
         licenses {
