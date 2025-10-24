@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "WaveForm"
+rootProject.name = "Waveform"
 include(":app")
 include(":waveform")
