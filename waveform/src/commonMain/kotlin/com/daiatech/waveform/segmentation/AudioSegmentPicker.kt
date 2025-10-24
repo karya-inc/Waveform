@@ -26,12 +26,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -39,6 +41,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.times
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.models.WaveformAlignment
@@ -199,11 +202,10 @@ fun AudioSegmentPicker(
                 }
 
                 window?.let { window ->
-                    drawRoundRect(
-                        brush = SolidColor(colors.selectionOutline),
-                        topLeft = window.first,
-                        size = window.second,
+                    drawSegmentWindow(
                         cornerRadius = windowCornerRadius,
+                        window = window,
+                        colors = colors,
                         style = Stroke(spikeWidthPx)
                     )
                 }
@@ -237,6 +239,53 @@ fun AudioSegmentPicker(
             )
         }
     }
+}
+
+fun DrawScope.drawSegmentWindow(
+    cornerRadius: CornerRadius,
+    window: Pair<Offset, Size>,
+    colors: SegmentationColors,
+    style: Stroke
+) {
+    drawRoundRect(
+        color = colors.selectionOutline.copy(0.2f),
+        topLeft = window.first,
+        size = window.second,
+        cornerRadius = cornerRadius
+    )
+    drawRoundRect(
+        brush = SolidColor(colors.selectionOutline),
+        topLeft = window.first,
+        size = window.second,
+        cornerRadius = cornerRadius,
+        style = style
+    )
+    drawCircle(
+        color = colors.contentPrimary,
+        radius = 8.dp.toPx(),
+        center = Offset(window.first.x, window.first.y + window.second.height / 2)
+    )
+    drawCircle(
+        color = colors.trimHandleStart,
+        radius = 6.dp.toPx(),
+        center = Offset(window.first.x, window.first.y + window.second.height / 2)
+    )
+    drawCircle(
+        color = colors.contentPrimary,
+        radius = 8.dp.toPx(),
+        center = Offset(
+            x = window.first.x + window.second.width,
+            y = window.first.y + window.second.height / 2
+        )
+    )
+    drawCircle(
+        color = colors.trimHandleEnd,
+        radius = 6.dp.toPx(),
+        center = Offset(
+            x = window.first.x + window.second.width,
+            y = window.first.y + window.second.height / 2
+        )
+    )
 }
 
 @Composable
