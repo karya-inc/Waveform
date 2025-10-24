@@ -137,6 +137,7 @@ class SegmentPickerState(
     }
 
     private val _segment = mutableStateOf<Segment?>(null)
+    val segment : State<Segment?> = _segment
 
     /**
      * start
