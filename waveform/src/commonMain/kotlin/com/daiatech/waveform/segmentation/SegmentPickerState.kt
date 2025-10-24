@@ -137,23 +137,13 @@ class SegmentPickerState(
     }
 
     private val _segment = mutableStateOf<Segment?>(null)
-    val segment : State<Segment?> = _segment
+    val segment: State<Segment?> = _segment
 
-    /**
-     * start
-     * = ([canvasWidthPx] / [durationMs]) * start
-     * = ([spikeTotalWidthPx] * [noOfSpikes] / [durationMs] ) * start
-     * = ([spikeTotalWidthPx] * ([durationMs] * [spikeCountPerTimestampMs] / [timestampMs])) / [durationMs] * start
-     * = ([spikeTotalWidthPx] * [spikeCountPerTimestampMs] / [timestampMs]) * start
-     *
-     * similarly,
-     * end = ([spikeTotalWidthPx] * [spikeCountPerTimestampMs] / [timestampMs]) * end
-     */
+
     val window = derivedStateOf {
         _segment.value?.let {
-            val startPx =
-                (spikeTotalWidthPx * spikeCountPerTimestampMs * it.start) / timestampMs.value
-            val endPx = (spikeTotalWidthPx * spikeCountPerTimestampMs * it.end) / timestampMs.value
+            val startPx = durationToPx(it.start)
+            val endPx = durationToPx(it.end)
             // canvasWidth
             // topLeft and size dependent on zoom
             Offset(x = startPx, y = layout.spikesOffset) to Size(
@@ -161,6 +151,30 @@ class SegmentPickerState(
                 height = graphHeightPx
             )
         }
+    }
+
+    /**
+     * px
+     * = width for 1ms * dur
+     * = ([canvasWidthPx] / [durationMs]) * dur
+     * = ([spikeTotalWidthPx] * [noOfSpikes] / [durationMs] ) * dur
+     * = ([spikeTotalWidthPx] * ([durationMs] * [spikeCountPerTimestampMs] / [timestampMs])) / [durationMs] * dur
+     * = ([spikeTotalWidthPx] * [spikeCountPerTimestampMs] / [timestampMs]) * dur
+     */
+    fun durationToPx(dur: Long): Float {
+        return (spikeTotalWidthPx * spikeCountPerTimestampMs * dur) / timestampMs.value
+    }
+
+    /**
+     * dur
+     * = dur in 1 px * pixels
+     * = (duration/waveformWidth) * pixels
+     * = (duration/(spikeTotalWidthPx * totalSpikesCount)) * pixels
+     * = (duration/(spikeTotalWidth * (duration * spikeCountPerTimestampMp)/TimestampMs) * pixels
+     * = (timestampMp * dragAmount)/(spikeTotalWidth * spikeCountPerTimestampMp)
+     */
+    fun pxToDuration(px: Float): Long {
+        return ((timestampMs.value * px) / (spikeTotalWidthPx * spikeCountPerTimestampMs)).toLong()
     }
 
     fun addSegment(start: Long) {
