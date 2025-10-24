@@ -21,7 +21,8 @@ private fun AudioSegmentPickerPreview2Android() {
             waveformColor = Color(0xFFD5D5D5),
             primaryProgressColor = Color(0xFFDE3730),
             fadeColor = Color(0xFF00363D),
-            buttonColor = Color(0xFF008857)
+            buttonColor = Color(0xFF008857),
+            activeWindowColor = Color(0xFFC8E56E)
         )
     )
 }
