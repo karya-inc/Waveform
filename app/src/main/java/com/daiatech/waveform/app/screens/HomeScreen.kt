@@ -27,6 +27,7 @@ import java.io.File
 @Composable
 fun HomeScreen(
     navigateToSegmentation: (String) -> Unit,
+    navigateToSegmentation2: (String) -> Unit,
     navigateToSegmentPicker: (String) -> Unit,
     navigateToAmplitudeGraph: (String) -> Unit
 ) {
@@ -69,6 +70,10 @@ fun HomeScreen(
                 Column {
                     Button(onClick = { navigateToSegmentation(files[selected]) }) {
                         Text("Audio Segmentation")
+                    }
+
+                    Button(onClick = { navigateToSegmentation2(files[selected]) }) {
+                        Text("Audio Segmentation V2")
                     }
 
                     Button(onClick = { navigateToSegmentPicker(files[selected]) }) {

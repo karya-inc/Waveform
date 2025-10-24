@@ -22,6 +22,9 @@ import kotlinx.serialization.Serializable
 data class SegmentationScreen(val audioFilePath: String)
 
 @Serializable
+data class SegmentationScreen2(val audioFilePath: String)
+
+@Serializable
 data class SegmentPickerScreen(val audioFilePath: String)
 
 @Serializable
@@ -48,6 +51,9 @@ fun App() {
                     navigateToSegmentation = { path ->
                         navController.navigate(SegmentationScreen(path))
                     },
+                    navigateToSegmentation2 = {path ->
+                        navController.navigate(SegmentationScreen2(path))
+                    },
                     navigateToSegmentPicker = { path ->
                         navController.navigate(SegmentPickerScreen(path))
                     },
@@ -56,6 +62,11 @@ fun App() {
 
                     }
                 )
+            }
+
+            composable<SegmentationScreen2> { backStackEntry ->
+                val route = backStackEntry.toRoute<SegmentationScreen2>()
+                AudioSegmentationScreen2(audioFilePath = route.audioFilePath)
             }
 
             composable<SegmentationScreen> { backStackEntry ->
