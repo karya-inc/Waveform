@@ -16,3 +16,6 @@ local.properties
 
 .idea
 .kotlin
+
+*.apk
+*.aab
