@@ -44,6 +44,8 @@ dependencies {
     implementation(project(":waveform"))
     implementation(files("../libs/amplituda.aar"))
 
+    implementation(libs.karya.ui.cmp)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

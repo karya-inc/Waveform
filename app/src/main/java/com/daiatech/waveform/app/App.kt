@@ -14,6 +14,7 @@ import androidx.navigation.toRoute
 import com.daiatech.waveform.app.screens.AmplitudeGraphsScreen
 import com.daiatech.waveform.app.screens.AudioSegmentPickerScreen
 import com.daiatech.waveform.app.screens.AudioSegmentationScreen
+import com.daiatech.waveform.app.screens.AudioSegmentationScreen2
 import com.daiatech.waveform.app.screens.HomeScreen
 import com.daiatech.waveform.app.ui.theme.WaveFormTheme
 import kotlinx.serialization.Serializable

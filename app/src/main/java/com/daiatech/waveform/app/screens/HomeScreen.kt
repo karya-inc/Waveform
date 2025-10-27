@@ -34,7 +34,8 @@ fun HomeScreen(
     val context = LocalContext.current
     var files by remember { mutableStateOf<List<String>>(listOf()) }
     var selectedFileIdx by remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(Unit) {
+    var refreshFiles by remember { mutableStateOf(false) }
+    LaunchedEffect(refreshFiles) {
         context.filesDir?.listFiles()?.map { it.path }
             ?.filter { it.split(".").last() == "mp3" }
             ?.let { files = it }
@@ -51,7 +52,7 @@ fun HomeScreen(
                     inputStream.copyTo(outputStream)
                 }
             }
-            // recompose
+            refreshFiles = !refreshFiles
         }
     }
 
