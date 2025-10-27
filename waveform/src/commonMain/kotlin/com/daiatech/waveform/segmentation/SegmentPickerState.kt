@@ -47,6 +47,7 @@ class SegmentPickerState(
     val amplitudes: List<Int>,
     val durationMs: Long,
     val minimumSegmentDuration: Long,
+    val inactive: List<Segment>
 ) {
 
     val spikeRadiusPx = with(density) {
@@ -178,7 +179,15 @@ class SegmentPickerState(
     }
 
     fun addSegment(start: Long) {
-        if (_segment.value != null) return
+        if (_segment.value != null) {
+            println("Cannot add segment, start is before last inactive end")
+            return
+        }
+        val lastInactive = inactive.lastOrNull()
+        if(lastInactive != null && start < lastInactive.end) {
+            println("Cannot add segment, start is before last inactive end")
+            return
+        }
         val end = (start + minimumSegmentDuration)
         if (end > durationMs) return
         _segment.value = Segment(start, end)
@@ -190,7 +199,8 @@ class SegmentPickerState(
 
     fun addToStart(by: Int) {
         val current = _segment.value ?: return
-        val newStart = (current.start + by).coerceIn(0, current.end - minimumSegmentDuration)
+        val minStart = inactive.lastOrNull()?.end ?: 0
+        val newStart = (current.start + by).coerceIn(minStart, current.end - minimumSegmentDuration)
         _segment.value = current.copy(start = newStart)
     }
 
@@ -206,7 +216,8 @@ class SegmentPickerState(
 fun rememberSegmentPickerState(
     amplitudes: List<Int>,
     durationMs: Long,
-    minimumSegmentMs: Long
+    minimumSegmentMs: Long,
+    inactive: List<Segment>
 ): SegmentPickerState {
     val density = LocalDensity.current
     return remember {
@@ -218,7 +229,8 @@ fun rememberSegmentPickerState(
             amplitudes = amplitudes,
             durationMs = durationMs,
             waveformAlignment = WaveformAlignment.Center,
-            minimumSegmentDuration = minimumSegmentMs
+            minimumSegmentDuration = minimumSegmentMs,
+            inactive = inactive
         )
     }
 }

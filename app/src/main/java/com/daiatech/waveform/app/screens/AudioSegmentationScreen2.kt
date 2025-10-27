@@ -2,7 +2,6 @@ package com.daiatech.waveform.app.screens
 
 import android.os.Handler
 import android.os.Looper
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,16 +33,16 @@ import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.AUDIO_PLAYER_REFRESH_RATE_MS
 import com.daiatech.waveform.app.model.AudioMeta
 import com.daiatech.waveform.app.utils.LocalAudioManager
+import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.AudioSegmentPicker
-import com.daiatech.waveform.segmentation.SegmentationColors
 import com.daiatech.waveform.segmentation.rememberSegmentPickerState
 import com.daiatech.waveform.segmentation.segmentationColors
-import kotlinx.coroutines.Job
 
 @Composable
 fun AudioSegmentationScreen2(
     audioFilePath: String,
-    colors: SegmentationColors = segmentationColors()
+    segments: List<Segment>,
+    onSubmit: (Segment) -> Unit
 ) {
     var meta by remember { mutableStateOf<AudioMeta?>(null) }
     val audioManager = LocalAudioManager.current
@@ -56,22 +55,26 @@ fun AudioSegmentationScreen2(
     }
 
     meta?.run {
+        var isPlaying by remember { mutableStateOf(false) }
+        var isSegmentPlaying by remember { mutableStateOf(false) }
+        var progressMs by remember { mutableLongStateOf(0) }
+        var speed by remember { mutableFloatStateOf(1f) }
         val exoPlayer = remember {
             ExoPlayer.Builder(context).build().apply {
                 val mediaItem = MediaItem.fromUri(audioFilePath)
                 setMediaItem(mediaItem)
                 prepare()
+                segments.lastOrNull()?.let {
+                    seekTo(it.end)
+                    progressMs = it.end
+                }
             }
         }
-
-        var isPlaying by remember { mutableStateOf(false) }
-        var isSegmentPlaying by remember { mutableStateOf(false) }
-        var progressMs by remember { mutableLongStateOf(0) }
-        var speed by remember { mutableFloatStateOf(1f) }
         val segmentPickerState = rememberSegmentPickerState(
             amplitudes = amplitudes,
             durationMs = duration,
-            minimumSegmentMs = 1000
+            minimumSegmentMs = 1000,
+            inactive = segments
         )
         val segment = segmentPickerState.segment
 
@@ -187,18 +190,20 @@ fun AudioSegmentationScreen2(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .background(colors.background)
+                    .background(segmentationColors().background)
                     .padding(8.dp)
             ) {
-                AnimatedVisibility(visible = segmentPickerState.segment.value == null) {
+                if (segmentPickerState.segment.value == null) {
                     KButton(
+                        modifier = Modifier.fillMaxWidth(),
                         content = "Add Segment",
                         buttonVariation = ButtonVariation.PrimaryButtonRegular,
-                        onClick = { segmentPickerState.addSegment(progressMs) }
+                        onClick = { segmentPickerState.addSegment(progressMs) },
+                        isEnabled = progressMs >= (segments.lastOrNull()?.end ?: 0)
                     )
                 }
 
-                AnimatedVisibility(visible = segmentPickerState.segment.value != null) {
+                if (segmentPickerState.segment.value != null) {
                     Row(Modifier.fillMaxWidth()) {
                         KIconButton(
                             onClick = { segmentPickerState.removeSegment() },
@@ -215,7 +220,7 @@ fun AudioSegmentationScreen2(
                             modifier = Modifier.weight(1f),
                             content = "Submit Segment",
                             buttonVariation = ButtonVariation.PrimaryButtonRegular,
-                            onClick = { }
+                            onClick = { segment.value?.let { onSubmit(it) } }
                         )
                     }
                 }

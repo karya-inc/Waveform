@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,6 +18,7 @@ import com.daiatech.waveform.app.screens.AudioSegmentationScreen
 import com.daiatech.waveform.app.screens.AudioSegmentationScreen2
 import com.daiatech.waveform.app.screens.HomeScreen
 import com.daiatech.waveform.app.ui.theme.WaveFormTheme
+import com.daiatech.waveform.models.Segment
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -40,7 +42,7 @@ object HomeScreen
 fun App() {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         val navController = rememberNavController()
-        val context = LocalContext.current
+        val segments = remember { mutableListOf<Segment>() }
         NavHost(
             modifier = Modifier.padding(innerPadding),
             navController = navController,
@@ -52,7 +54,7 @@ fun App() {
                     navigateToSegmentation = { path ->
                         navController.navigate(SegmentationScreen(path))
                     },
-                    navigateToSegmentation2 = {path ->
+                    navigateToSegmentation2 = { path ->
                         navController.navigate(SegmentationScreen2(path))
                     },
                     navigateToSegmentPicker = { path ->
@@ -67,7 +69,16 @@ fun App() {
 
             composable<SegmentationScreen2> { backStackEntry ->
                 val route = backStackEntry.toRoute<SegmentationScreen2>()
-                AudioSegmentationScreen2(audioFilePath = route.audioFilePath)
+                AudioSegmentationScreen2(
+                    audioFilePath = route.audioFilePath,
+                    segments = segments,
+                    onSubmit = { segment ->
+                        segments.add(segment)
+                        navController.navigate(SegmentationScreen2(route.audioFilePath)) {
+                            popUpTo(route) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable<SegmentationScreen> { backStackEntry ->
