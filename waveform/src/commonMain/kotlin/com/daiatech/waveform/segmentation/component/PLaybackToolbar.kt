@@ -61,6 +61,7 @@ fun PLaybackToolbar(
                     }
                 },
                 containerColor = Color.White.copy(0.1f),
+                contentColor = colors.contentPrimary,
                 modifier = Modifier.height(48.dp).fillMaxWidth()
             )
         }
