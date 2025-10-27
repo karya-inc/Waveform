@@ -14,6 +14,7 @@ data class SegmentationColors(
     val waveformColor: Color,             // Amplitude spikes
     val playheadIndicator: Color,         // The vertical red line
     val selectionOutline: Color,          // The yellow-green selection box outline
+    val inactiveSelectionOutline: Color,  // The gray-green selection box outline for inactive segment
     val trimHandleStart: Color,           // The blue start handle
     val trimHandleEnd: Color,             // The olive green end handle
     val buttonBackgroundPrimary: Color,   // Dark Grey button background
@@ -35,6 +36,7 @@ fun segmentationColors(
     waveformColor: Color = Color(0xFFD5D5D5), // Amplitude spikes
     playheadIndicator: Color = Color(0xFFDE3730), // Bright Red
     selectionOutline: Color = Color(0xFFC8E56E), // Yellow-Green
+    inactiveSelectionOutline: Color = Color(0xFF959595), // Yellow-Green
     trimHandleStart: Color = Color(0xFF007BCB), // Bright Blue
     trimHandleEnd: Color = Color(0xFF688010), // Olive Green
     buttonBackgroundPrimary: Color = Color(0xFF222222), // Dark Grey
@@ -50,6 +52,7 @@ fun segmentationColors(
         waveformColor = waveformColor,
         playheadIndicator = playheadIndicator,
         selectionOutline = selectionOutline,
+        inactiveSelectionOutline = inactiveSelectionOutline,
         trimHandleStart = trimHandleStart,
         trimHandleEnd = trimHandleEnd,
         buttonBackgroundPrimary = buttonBackgroundPrimary,

@@ -18,10 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -56,6 +54,7 @@ import com.daiatech.karya.ui.buttons.ButtonVariation
 import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
+import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.component.PLaybackToolbar
@@ -110,6 +109,7 @@ fun AudioSegmentPicker(
     val timestampMs = state.timestampMs.value
     val drawableAmplitudes = state.drawableAmplitudes.value
     val window = state.window.value
+    val inactiveSegment = state.inactive
     val segment = state.segment.value
     val spikeCountPerTimestampMs = state.spikeCountPerTimestampMs
 
@@ -233,6 +233,25 @@ fun AudioSegmentPicker(
                         style = Stroke(spikeWidthPx)
                     )
                 }
+
+                inactiveSegment.forEach { segment ->
+                    val startPx = state.durationToPx(segment.start)
+                    val endPx = state.durationToPx(segment.end)
+                    val width = endPx - startPx
+                    drawRoundRect(
+                        brush = SolidColor(colors.inactiveSelectionOutline),
+                        topLeft = Offset(x = startPx, y = layout.spikesOffset),
+                        size = Size(width, state.graphHeightPx),
+                        cornerRadius = windowCornerRadius,
+                        style = Stroke(spikeWidthPx)
+                    )
+                    drawRoundRect(
+                        color = colors.inactiveSelectionOutline.copy(0.2f),
+                        topLeft = Offset(x = startPx, y = layout.spikesOffset),
+                        size = Size(width, state.graphHeightPx),
+                        cornerRadius = windowCornerRadius,
+                    )
+                }
             }
         }
 
@@ -329,6 +348,7 @@ fun AudioSegmentPickerPreview(
         amplitudes = listOf(100, 200, 300, 500, 100, 20).times(20),
         durationMs = 8000,
         minimumSegmentMs = 500,
+        inactive = listOf(Segment(0, 1000))
     )
 
     Surface {
