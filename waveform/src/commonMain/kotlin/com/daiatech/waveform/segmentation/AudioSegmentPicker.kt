@@ -23,7 +23,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,6 +58,7 @@ import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.component.PLaybackToolbar
 import com.daiatech.waveform.segmentation.component.SegmentToolbar
+import com.daiatech.waveform.segmentation.models.PlaybackSpeed
 import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -81,9 +81,8 @@ fun AudioSegmentPicker(
     isSegmentPlaying: Boolean,
     toggleSegmentPlayback: () -> Unit,
     seek: (Long) -> Unit,
-    speed: Float,
-    updateSpeed: (Float) -> Unit,
-    availableSpeeds: List<Float> = listOf(0.25f, 0.5f, 1f),
+    speed: PlaybackSpeed,
+    updateSpeed: (PlaybackSpeed) -> Unit,
     waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
     spikeAnimationSpec: AnimationSpec<Float> = tween(500),
 ) {
@@ -267,7 +266,6 @@ fun AudioSegmentPicker(
             onZoomIn = state::zoomIn,
             onZoomOut = state::zoomOut,
             updateSpeed = updateSpeed,
-            availableSpeeds = availableSpeeds
         )
 
         segment?.let { segment ->
@@ -342,7 +340,7 @@ fun AudioSegmentPickerPreview(
     var progressMs by remember { mutableLongStateOf(0) }
     var isPlaying by remember { mutableStateOf(false) }
     var isSegmentPlaying by remember { mutableStateOf(false) }
-    var speed by remember { mutableFloatStateOf(1f) }
+    var speed by remember { mutableStateOf(PlaybackSpeed.X1_00) }
 
     val state = rememberSegmentPickerState(
         amplitudes = listOf(100, 200, 300, 500, 100, 20).times(20),
@@ -371,7 +369,7 @@ fun AudioSegmentPickerPreview(
                         isPlaying = true
                         progressJobRef.value = coroutineScope.launch {
                             while (progressMs < 8000L && isPlaying) {
-                                progressMs += (50.times(speed)).toLong()
+                                progressMs += (50.times(speed.float)).toLong()
                                 delay(50)
                             }
                             if (progressMs >= 8000L) {
@@ -406,7 +404,7 @@ fun AudioSegmentPickerPreview(
                             progressMs = segment.start
                             progressJobRef.value = coroutineScope.launch {
                                 while (progressMs < segment.end && isSegmentPlaying) {
-                                    progressMs += (50.times(speed)).toLong()
+                                    progressMs += (50.times(speed.float)).toLong()
                                     delay(50)
                                 }
                                 if (progressMs >= segment.end) {
