@@ -53,7 +53,7 @@ class AudioManagerImpl(private val context: Context) : AudioManager {
         var amplitudes = listOf<Int>()
         amplituda?.processAudio(
             path,
-            Compress.withParams(Compress.AVERAGE, 40),
+            Compress.withParams(Compress.AVERAGE, 320),
             Cache.withParams(cachePolicy)
         )?.get(
             { result ->
