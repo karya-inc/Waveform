@@ -1,4 +1,4 @@
-package com.daiatech.waveform.segmentation.component
+package com.daiatech.waveform.segmentation.speed
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.daiatech.waveform.segmentation.models.PlaybackSpeed
 
 @Composable
 fun SpeedButton(
