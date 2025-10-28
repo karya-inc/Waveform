@@ -1,4 +1,4 @@
-package com.daiatech.waveform.segmentation.models
+package com.daiatech.waveform.segmentation.zoom
 
 enum class Zoom(val value: Int) {
     X1(1),

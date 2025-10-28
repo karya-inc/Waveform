@@ -1,4 +1,4 @@
-package com.daiatech.waveform.segmentation.models
+package com.daiatech.waveform.segmentation.speed
 
 enum class PlaybackSpeed(val float: Float) {
     X0_25(0.25F),

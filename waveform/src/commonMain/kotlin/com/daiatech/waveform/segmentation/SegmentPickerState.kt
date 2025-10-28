@@ -25,7 +25,7 @@ import com.daiatech.waveform.minSpikeWidthDp
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.models.WaveformAlignment
-import com.daiatech.waveform.segmentation.models.Zoom
+import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
 import kotlin.math.pow
 

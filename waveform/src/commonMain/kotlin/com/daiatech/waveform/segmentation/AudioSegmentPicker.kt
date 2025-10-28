@@ -56,9 +56,9 @@ import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
-import com.daiatech.waveform.segmentation.component.PLaybackToolbar
+import com.daiatech.waveform.segmentation.component.PlaybackToolbar
 import com.daiatech.waveform.segmentation.component.SegmentToolbar
-import com.daiatech.waveform.segmentation.models.PlaybackSpeed
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -254,7 +254,7 @@ fun AudioSegmentPicker(
             }
         }
 
-        PLaybackToolbar(
+        PlaybackToolbar(
             colors = colors,
             progressMs = progressMs,
             durationMs = durationMs,

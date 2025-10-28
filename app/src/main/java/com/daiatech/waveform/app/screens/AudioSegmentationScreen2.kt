@@ -34,7 +34,7 @@ import com.daiatech.waveform.app.model.AudioMeta
 import com.daiatech.waveform.app.utils.LocalAudioManager
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.AudioSegmentPicker
-import com.daiatech.waveform.segmentation.models.PlaybackSpeed
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.segmentation.rememberSegmentPickerState
 import com.daiatech.waveform.segmentation.segmentationColors
 

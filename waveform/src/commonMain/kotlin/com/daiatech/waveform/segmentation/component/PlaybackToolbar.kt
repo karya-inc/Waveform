@@ -25,12 +25,14 @@ import com.daiatech.waveform.ic_pause
 import com.daiatech.waveform.ic_play_arrow
 import com.daiatech.waveform.millisecondsToMmSs
 import com.daiatech.waveform.segmentation.SegmentationColors
-import com.daiatech.waveform.segmentation.models.PlaybackSpeed
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.segmentation.segmentationColors
+import com.daiatech.waveform.segmentation.speed.SpeedButton
+import com.daiatech.waveform.segmentation.zoom.ZoomButton
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun PLaybackToolbar(
+fun PlaybackToolbar(
     modifier: Modifier = Modifier,
     colors: SegmentationColors,
     progressMs: Long,
@@ -99,8 +101,8 @@ fun PLaybackToolbar(
 }
 
 @Composable
-fun PLaybackToolbarPreview() {
-    PLaybackToolbar(
+fun PlaybackToolbarPreview() {
+    PlaybackToolbar(
         colors = segmentationColors(),
         progressMs = 30000L,
         durationMs = 60000L,
