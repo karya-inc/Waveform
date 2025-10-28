@@ -74,7 +74,7 @@ class SegmentPickerState(
     /**
      * Duration in milliseconds between two timestamp markers.
      */
-    val timestampMs = derivedStateOf { ((500 / 2.0.pow((zoom.value - 1).toDouble())).toLong()) }
+    val timestampMs = derivedStateOf { ((500 - (zoom.value - 1).times(100)).toLong()) }
 
     /**
      * No of spikes between two timestamp markers.
