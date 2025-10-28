@@ -16,7 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +34,7 @@ import com.daiatech.waveform.app.model.AudioMeta
 import com.daiatech.waveform.app.utils.LocalAudioManager
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.AudioSegmentPicker
+import com.daiatech.waveform.segmentation.models.PlaybackSpeed
 import com.daiatech.waveform.segmentation.rememberSegmentPickerState
 import com.daiatech.waveform.segmentation.segmentationColors
 
@@ -58,7 +58,7 @@ fun AudioSegmentationScreen2(
         var isPlaying by remember { mutableStateOf(false) }
         var isSegmentPlaying by remember { mutableStateOf(false) }
         var progressMs by remember { mutableLongStateOf(0) }
-        var speed by remember { mutableFloatStateOf(1f) }
+        var speed by remember { mutableStateOf(PlaybackSpeed.X1_00) }
         val exoPlayer = remember {
             ExoPlayer.Builder(context).build().apply {
                 val mediaItem = MediaItem.fromUri(audioFilePath)
@@ -141,7 +141,7 @@ fun AudioSegmentationScreen2(
 
         // Update ExoPlayer speed when speed changes
         LaunchedEffect(speed) {
-            exoPlayer.setPlaybackSpeed(speed)
+            exoPlayer.setPlaybackSpeed(speed.float)
         }
 
         Column {

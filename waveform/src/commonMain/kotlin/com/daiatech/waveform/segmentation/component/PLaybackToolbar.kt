@@ -25,6 +25,7 @@ import com.daiatech.waveform.ic_pause
 import com.daiatech.waveform.ic_play_arrow
 import com.daiatech.waveform.millisecondsToMmSs
 import com.daiatech.waveform.segmentation.SegmentationColors
+import com.daiatech.waveform.segmentation.models.PlaybackSpeed
 import com.daiatech.waveform.segmentation.segmentationColors
 import org.jetbrains.compose.resources.painterResource
 
@@ -37,12 +38,11 @@ fun PLaybackToolbar(
     isPlaying: Boolean,
     enableZoomIn: Boolean,
     enableZoomOut: Boolean,
-    speed: Float,
+    speed: PlaybackSpeed,
     togglePlayback: () -> Unit,
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
-    updateSpeed: (Float) -> Unit,
-    availableSpeeds: List<Float>
+    updateSpeed: (PlaybackSpeed) -> Unit
 ) {
     Row(
         modifier = modifier.padding(16.dp),
@@ -52,14 +52,9 @@ fun PLaybackToolbar(
             Text("Speed", color = colors.contentPrimary)
             Spacer(Modifier.height(8.dp))
             SpeedButton(
-                availableSpeeds = availableSpeeds,
-                selectedSpeedIdx = availableSpeeds.indexOf(speed),
-                onSpeedUpdate = {
-                    val speed = availableSpeeds.getOrNull(it)
-                    if (speed != null) {
-                        updateSpeed(speed)
-                    }
-                },
+                availableSpeeds = PlaybackSpeed.entries,
+                selectedSpeed = speed,
+                onSpeedUpdate = updateSpeed,
                 containerColor = Color.White.copy(0.1f),
                 contentColor = colors.contentPrimary,
                 modifier = Modifier.height(48.dp).fillMaxWidth()
@@ -112,11 +107,10 @@ fun PLaybackToolbarPreview() {
         isPlaying = false,
         enableZoomIn = true,
         enableZoomOut = true,
-        speed = 1.0f,
+        speed = PlaybackSpeed.X1_00,
         togglePlayback = {},
         onZoomIn = {},
         onZoomOut = {},
         updateSpeed = {},
-        availableSpeeds = listOf(0.5f, 1.0f, 1.5f, 2.0f)
     )
 }

@@ -25,6 +25,7 @@ import com.daiatech.waveform.minSpikeWidthDp
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.models.WaveformAlignment
+import com.daiatech.waveform.segmentation.models.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
 import kotlin.math.pow
 
@@ -69,19 +70,19 @@ class SegmentPickerState(
     /**
      *
      */
-    private var zoom = mutableIntStateOf(1) // 1x, 2x, 3x, 4x, 5x
+    private var zoom = mutableStateOf(Zoom.X1) // 1x, 2x, 3x, 4x, 5x
 
     /**
      * Duration in milliseconds between two timestamp markers.
      */
-    val timestampMs = derivedStateOf { ((500 - (zoom.value - 1).times(100)).toLong()) }
+    val timestampMs = derivedStateOf { ((500 - (zoom.value.value - 1).times(100)).toLong()) }
 
     /**
      * No of spikes between two timestamp markers.
      */
     val spikeCountPerTimestampMs: Int = 10
-    val enableZoomIn = derivedStateOf { zoom.value != 5 }
-    val enableZoomOut = derivedStateOf { zoom.value != 1 }
+    val enableZoomIn = derivedStateOf { zoom.value != Zoom.X5 }
+    val enableZoomOut = derivedStateOf { zoom.value != Zoom.X1 }
     val noOfSpikes = derivedStateOf {
         ((durationMs * spikeCountPerTimestampMs) / timestampMs.value).toInt()
     }
@@ -126,15 +127,11 @@ class SegmentPickerState(
 
 
     fun zoomIn() {
-        if (zoom.value < 5) {
-            zoom.value += 1
-        }
+        zoom.value = zoom.value.increment()
     }
 
     fun zoomOut() {
-        if (zoom.value > 1) {
-            zoom.value -= 1
-        }
+        zoom.value = zoom.value.decrement()
     }
 
     private val _segment = mutableStateOf<Segment?>(null)

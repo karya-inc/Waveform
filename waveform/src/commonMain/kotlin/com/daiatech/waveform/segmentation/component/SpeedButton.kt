@@ -23,21 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.daiatech.waveform.segmentation.models.PlaybackSpeed
 
-/**
- * A drop down menu
- *
- * @param modifier
- * @param options
- * @param selectedItemIdx index of the selected item
- * @param onItemSelected callback when an item is selected
- */
 @Composable
 fun SpeedButton(
     modifier: Modifier = Modifier,
-    availableSpeeds: List<Float>,
-    selectedSpeedIdx: Int,
-    onSpeedUpdate: (index: Int) -> Unit,
+    availableSpeeds: List<PlaybackSpeed>,
+    selectedSpeed: PlaybackSpeed,
+    onSpeedUpdate: (speed: PlaybackSpeed) -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.primary,
     contentColor: Color = MaterialTheme.colorScheme.onPrimary
 ) {
@@ -52,11 +45,7 @@ fun SpeedButton(
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-            text = if (selectedSpeedIdx in availableSpeeds.indices) {
-                "${availableSpeeds[selectedSpeedIdx]}x"
-            } else {
-                "Speed"
-            },
+            text = "${selectedSpeed.float}x",
             color = contentColor
         )
         Icon(
@@ -70,11 +59,11 @@ fun SpeedButton(
         expanded = expanded,
         onDismissRequest = { expanded = false }
     ) {
-        availableSpeeds.forEachIndexed { index, option ->
+        availableSpeeds.forEach { option ->
             DropdownMenuItem(
-                text = { Text("${option}x") },
+                text = { Text("${option.float}x") },
                 onClick = {
-                    onSpeedUpdate(index)
+                    onSpeedUpdate(option)
                     expanded = false
                 }
             )
@@ -87,8 +76,8 @@ fun SpeedButton(
 fun SpeedButtonPreview() {
     Surface {
         SpeedButton(
-            availableSpeeds = listOf(1f, 2f, 3f),
-            selectedSpeedIdx = 0,
+            availableSpeeds = PlaybackSpeed.entries,
+            selectedSpeed = PlaybackSpeed.X1_00,
             modifier = Modifier.width(128.dp),
             onSpeedUpdate = { }
         )
