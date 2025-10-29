@@ -3,12 +3,9 @@ package com.daiatech.waveform.segmentation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -24,10 +21,10 @@ import com.daiatech.waveform.minSpikeRadiusDp
 import com.daiatech.waveform.minSpikeWidthDp
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.Segment
-import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
-import kotlin.math.pow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Font size for timestamp markers
@@ -44,12 +41,22 @@ class SegmentPickerState(
     spikeWidth: Dp,
     spikeRadius: Dp,
     spikePadding: Dp,
-    waveformAlignment: WaveformAlignment,
     val amplitudes: List<Int>,
     val durationMs: Long,
     val minimumSegmentDuration: Long,
     val inactive: List<Segment>
 ) {
+
+    private val drawableAmplitudesStore = mutableMapOf<Zoom, List<Float>>()
+
+    private var zoom = mutableStateOf(Zoom.X1)
+
+    private val _drawableAmplitudes = mutableStateOf(listOf<Float>())
+
+    private val _segment = mutableStateOf<Segment?>(null)
+
+    private val _processing = mutableStateOf(false)
+
 
     val spikeRadiusPx = with(density) {
         spikeRadius.coerceIn(minSpikeRadiusDp, maxSpikeRadiusDp).toPx()
@@ -68,11 +75,6 @@ class SegmentPickerState(
     val graphHeightPx = with(density) { MIN_GRAPH_HEIGHT.toPx() }
 
     /**
-     *
-     */
-    private var zoom = mutableStateOf(Zoom.X1) // 1x, 2x, 3x, 4x, 5x
-
-    /**
      * Duration in milliseconds between two timestamp markers.
      */
     val timestampMs = derivedStateOf { ((500 - (zoom.value.value - 1).times(100)).toLong()) }
@@ -88,23 +90,14 @@ class SegmentPickerState(
     }
     val canvasWidthPx = derivedStateOf { spikeTotalWidthPx * noOfSpikes.value }
     val canvasWidthDp = derivedStateOf { with(density) { canvasWidthPx.value.toDp() } }
-
-    val drawableAmplitudes = derivedStateOf {
-        val amps = amplitudes.toDrawableAmplitudes(
-            amplitudeType = AmplitudeType.AVG,
-            spikes = noOfSpikes.value,
-            minHeight = MIN_SPIKE_HEIGHT,
-            maxHeight = with(density) { MIN_GRAPH_HEIGHT.toPx() }
-        ).mapIndexed { idx, amp ->
-            val x = idx * spikeTotalWidthPx
-            val y = when (waveformAlignment) {
-                WaveformAlignment.Top -> 0f
-                WaveformAlignment.Bottom -> graphHeightPx - amp
-                WaveformAlignment.Center -> (graphHeightPx - amp) / 2f
-            } + layout.spikesOffset
-            Offset(x, y) to amp
+    val drawableAmplitudes: State<List<Float>> = _drawableAmplitudes
+    val segment: State<Segment?> = _segment
+    val window = derivedStateOf {
+        _segment.value?.let {
+            val startPx = durationToPx(it.start)
+            val endPx = durationToPx(it.end)
+            Pair(startPx, endPx)
         }
-        amps
     }
 
     internal val layout = with(density) {
@@ -126,30 +119,35 @@ class SegmentPickerState(
     }
 
 
-    fun zoomIn() {
-        zoom.value = zoom.value.increment()
-    }
-
-    fun zoomOut() {
-        zoom.value = zoom.value.decrement()
-    }
-
-    private val _segment = mutableStateOf<Segment?>(null)
-    val segment: State<Segment?> = _segment
-
-
-    val window = derivedStateOf {
-        _segment.value?.let {
-            val startPx = durationToPx(it.start)
-            val endPx = durationToPx(it.end)
-            // canvasWidth
-            // topLeft and size dependent on zoom
-            Offset(x = startPx, y = layout.spikesOffset) to Size(
-                width = endPx - startPx,
-                height = graphHeightPx
+    suspend fun calculateDrawableAmplitudes() = withContext(Dispatchers.Default) {
+        val zoomValue = zoom.value
+        var drawableAmps = drawableAmplitudesStore[zoomValue]
+        if (drawableAmps == null) {
+            _processing.value = true
+            drawableAmps = amplitudes.toDrawableAmplitudes(
+                amplitudeType = AmplitudeType.AVG,
+                spikes = noOfSpikes.value,
+                minHeight = MIN_SPIKE_HEIGHT,
+                maxHeight = graphHeightPx
             )
+            drawableAmplitudesStore[zoomValue] = drawableAmps
         }
+        _processing.value  = false
+        _drawableAmplitudes.value = drawableAmps
     }
+
+
+    suspend fun zoomIn() {
+        zoom.value = zoom.value.increment()
+        calculateDrawableAmplitudes()
+    }
+
+    suspend fun zoomOut() {
+        zoom.value = zoom.value.decrement()
+        calculateDrawableAmplitudes()
+    }
+
+
 
     /**
      * px
@@ -181,7 +179,7 @@ class SegmentPickerState(
             return
         }
         val lastInactive = inactive.lastOrNull()
-        if(lastInactive != null && start < lastInactive.end) {
+        if (lastInactive != null && start < lastInactive.end) {
             println("Cannot add segment, start is before last inactive end")
             return
         }
@@ -206,7 +204,6 @@ class SegmentPickerState(
         val newEnd = (current.end + by).coerceIn(current.start + minimumSegmentDuration, durationMs)
         _segment.value = current.copy(end = newEnd)
     }
-
 }
 
 @Composable
@@ -225,7 +222,6 @@ fun rememberSegmentPickerState(
             spikePadding = 2.dp,
             amplitudes = amplitudes,
             durationMs = durationMs,
-            waveformAlignment = WaveformAlignment.Center,
             minimumSegmentDuration = minimumSegmentMs,
             inactive = inactive
         )

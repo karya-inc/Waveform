@@ -2,6 +2,8 @@ package com.daiatech.waveform.segmentation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -21,6 +23,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -53,6 +56,7 @@ import com.daiatech.karya.ui.buttons.ButtonVariation
 import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
+import com.daiatech.waveform.graphs.graphBarHeight
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
@@ -88,6 +92,7 @@ fun AudioSegmentPicker(
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
+    val coroutineScope = rememberCoroutineScope()
 
     val markersTextStyle = remember {
         TextStyle(fontSize = markerFontSize, color = colors.markerColor)
@@ -95,10 +100,12 @@ fun AudioSegmentPicker(
 
     var screenWidth by remember { mutableIntStateOf(0) }
     val screenWidthDp by derivedStateOf { with(density) { screenWidth.toDp() } }
+    LaunchedEffect(Unit) { state.calculateDrawableAmplitudes() }
 
     val durationMs = state.durationMs
     val canvasWidthDp = state.canvasWidthDp.value
     val spikeWidthPx = state.spikeWidthPx
+    val graphHeightPx = state.graphHeightPx
     val spikeTotalWidthPx = state.spikeTotalWidthPx
     val layout = state.layout
     val spikeCornerRadius = state.spikeCornerRadius
@@ -183,10 +190,12 @@ fun AudioSegmentPicker(
                     .offset(canvasOffset)
             ) {
                 drawableAmplitudes.forEachIndexed { index, amplitude ->
+                    val x = index * spikeTotalWidthPx
+                    val y = (state.graphHeightPx - amplitude) / 2f + layout.spikesOffset
                     drawRoundRect(
                         brush = SolidColor(colors.waveformColor),
-                        topLeft = amplitude.first,
-                        size = Size(spikeWidthPx, amplitude.second),
+                        topLeft = Offset(x, y),
+                        size = Size(spikeWidthPx, amplitude),
                         cornerRadius = spikeCornerRadius,
                         style = Fill
                     )
@@ -195,7 +204,7 @@ fun AudioSegmentPicker(
                     if (index % spikeCountPerTimestampMs == 0) {
                         drawRoundRect(
                             brush = SolidColor(colors.markerColor),
-                            topLeft = Offset(amplitude.first.x, layout.markerY),
+                            topLeft = Offset(x, layout.markerY),
                             size = Size(spikeWidthPx, layout.markerHeight),
                             cornerRadius = spikeCornerRadius,
                             style = Fill
@@ -215,7 +224,7 @@ fun AudioSegmentPicker(
                             textMeasurer = textMeasurer,
                             style = markersTextStyle,
                             text = timeText,
-                            topLeft = Offset(amplitude.first.x - (tm.size.width.toFloat() / 2), y),
+                            topLeft = Offset(x - (tm.size.width.toFloat() / 2), y),
                             size = Size(
                                 width = tm.size.width.toFloat(),
                                 height = tm.size.height.toFloat()
@@ -224,10 +233,11 @@ fun AudioSegmentPicker(
                     }
                 }
 
-                window?.let { window ->
+                window?.let { (startPx, endPx) ->
                     drawSegmentWindow(
                         cornerRadius = windowCornerRadius,
-                        window = window,
+                        topLeft = Offset(startPx, layout.spikesOffset),
+                        size = Size(endPx - startPx, graphHeightPx),
                         colors = colors,
                         style = Stroke(spikeWidthPx)
                     )
@@ -263,8 +273,8 @@ fun AudioSegmentPicker(
             enableZoomOut = enableZoomOut,
             speed = speed,
             togglePlayback = togglePlayback,
-            onZoomIn = state::zoomIn,
-            onZoomOut = state::zoomOut,
+            onZoomIn = { coroutineScope.launch { state.zoomIn() } },
+            onZoomOut = { coroutineScope.launch { state.zoomOut() } },
             updateSpeed = updateSpeed,
         )
 
@@ -284,47 +294,48 @@ fun AudioSegmentPicker(
 
 fun DrawScope.drawSegmentWindow(
     cornerRadius: CornerRadius,
-    window: Pair<Offset, Size>,
+    topLeft: Offset,
+    size: Size,
     colors: SegmentationColors,
     style: Stroke
 ) {
     drawRoundRect(
         color = colors.selectionOutline.copy(0.2f),
-        topLeft = window.first,
-        size = window.second,
+        topLeft = topLeft,
+        size = size,
         cornerRadius = cornerRadius
     )
     drawRoundRect(
         brush = SolidColor(colors.selectionOutline),
-        topLeft = window.first,
-        size = window.second,
+        topLeft = topLeft,
+        size = size,
         cornerRadius = cornerRadius,
         style = style
     )
     drawCircle(
         color = colors.contentPrimary,
         radius = 8.dp.toPx(),
-        center = Offset(window.first.x, window.first.y + window.second.height / 2)
+        center = Offset(topLeft.x, topLeft.y + size.height / 2)
     )
     drawCircle(
         color = colors.trimHandleStart,
         radius = 6.dp.toPx(),
-        center = Offset(window.first.x, window.first.y + window.second.height / 2)
+        center = Offset(topLeft.x, topLeft.y + size.height / 2)
     )
     drawCircle(
         color = colors.contentPrimary,
         radius = 8.dp.toPx(),
         center = Offset(
-            x = window.first.x + window.second.width,
-            y = window.first.y + window.second.height / 2
+            x = topLeft.x + size.width,
+            y = topLeft.y + size.height / 2
         )
     )
     drawCircle(
         color = colors.trimHandleEnd,
         radius = 6.dp.toPx(),
         center = Offset(
-            x = window.first.x + window.second.width,
-            y = window.first.y + window.second.height / 2
+            x = topLeft.x + size.width,
+            y = topLeft.y + size.height / 2
         )
     )
 }
