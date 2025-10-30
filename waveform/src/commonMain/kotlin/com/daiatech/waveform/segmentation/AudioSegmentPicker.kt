@@ -1,8 +1,6 @@
 package com.daiatech.waveform.segmentation
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -54,7 +52,6 @@ import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.models.Segment
-import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.component.PlaybackToolbar
 import com.daiatech.waveform.segmentation.component.SegmentToolbar
@@ -68,14 +65,11 @@ import kotlinx.coroutines.launch
 /**
  *
  * @param colors Custom colors for waveform elements.
- * @param waveformAlignment Alignment of spikes relative to the graph height.
- * @param spikeAnimationSpec Animation specification for spike height transitions.
  * @param progressMs Current time progress in milliseconds.
  */
 @Composable
 fun AudioSegmentPicker(
     state: SegmentPickerState,
-    colors: SegmentationColors = segmentationColors(),
     progressMs: Long,
     isPlaying: Boolean,
     togglePlayback: () -> Unit,
@@ -84,8 +78,7 @@ fun AudioSegmentPicker(
     seek: (Long) -> Unit,
     speed: PlaybackSpeed,
     updateSpeed: (PlaybackSpeed) -> Unit,
-    waveformAlignment: WaveformAlignment = WaveformAlignment.Center,
-    spikeAnimationSpec: AnimationSpec<Float> = tween(500),
+    colors: SegmentationColors = segmentationColors()
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()

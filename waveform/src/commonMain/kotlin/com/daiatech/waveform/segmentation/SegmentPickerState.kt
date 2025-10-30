@@ -136,10 +136,10 @@ class SegmentPickerState(
     /**
      * px
      * = width for 1ms * dur
-     * = ([canvasWidthPx] / [durationMs]) * dur
-     * = ([spikeTotalWidthPx] * [noOfSpikes] / [durationMs] ) * dur
-     * = ([spikeTotalWidthPx] * ([durationMs] * [spikeCountPerTimestampMs] / [timestampMs])) / [durationMs] * dur
-     * = ([spikeTotalWidthPx] * [spikeCountPerTimestampMs] / [timestampMs]) * dur
+     * = (canvasWidthPx / durationMs) * dur
+     * = (spikeTotalWidthPx * noOfSpikes / durationMs ) * dur
+     * = (spikeTotalWidthPx * (durationMs * spikeCountPerTimestampMs / timestampMs)) / durationMs * dur
+     * = (spikeTotalWidthPx * spikeCountPerTimestampMs / timestampMs) * dur
      */
     fun durationToPx(dur: Long): Float {
         return (layout.spikeTotalWidthPx * spikeCountPerTimestampMs * dur) /
