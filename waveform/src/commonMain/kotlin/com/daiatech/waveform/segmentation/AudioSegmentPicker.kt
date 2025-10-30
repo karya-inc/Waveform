@@ -2,8 +2,6 @@ package com.daiatech.waveform.segmentation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateOffsetAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -44,6 +41,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -51,18 +49,17 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.times
 import com.daiatech.karya.ui.buttons.ButtonVariation
 import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
-import com.daiatech.waveform.graphs.graphBarHeight
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.component.PlaybackToolbar
 import com.daiatech.waveform.segmentation.component.SegmentToolbar
 import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
+import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -99,34 +96,39 @@ fun AudioSegmentPicker(
     }
 
     var screenWidth by remember { mutableIntStateOf(0) }
-    val screenWidthDp by derivedStateOf { with(density) { screenWidth.toDp() } }
     LaunchedEffect(Unit) { state.calculateDrawableAmplitudes() }
 
-    val durationMs = state.durationMs
-    val canvasWidthDp = state.canvasWidthDp.value
-    val spikeWidthPx = state.spikeWidthPx
-    val graphHeightPx = state.graphHeightPx
-    val spikeTotalWidthPx = state.spikeTotalWidthPx
     val layout = state.layout
-    val spikeCornerRadius = state.spikeCornerRadius
-    val windowCornerRadius = state.windowCornerRadius
-    val enableZoomIn = state.enableZoomIn.value
-    val enableZoomOut = state.enableZoomOut.value
-    val timestampMs = state.timestampMs.value
-    val drawableAmplitudes = state.drawableAmplitudes.value
-    val window = state.window.value
-    val inactiveSegment = state.inactive
-    val segment = state.segment.value
+    val spikeWidthPx = layout.spikeWidthPx
+    val graphHeightPx = layout.graphHeightPx
+    val spikeTotalWidthPx = layout.spikeTotalWidthPx
+    val spikeCornerRadius = layout.spikeCornerRadius
+    val windowCornerRadius = layout.windowCornerRadius
+    val durationMs = state.durationMs
     val spikeCountPerTimestampMs = state.spikeCountPerTimestampMs
+    val inactiveSegment = state.inactive
 
+    val window by state.window
+    val segment by state.segment
+    val zoom by state.zoom
+    val drawableAmplitudes by state.drawableAmplitudes
+
+    val durationBetweenTimestampMarkers by derivedStateOf { durationBetweenTwoTimestampMarkers(zoom) }
+    val enableZoomIn by derivedStateOf { zoom != Zoom.max }
+    val enableZoomOut by derivedStateOf { zoom != Zoom.min }
+    val noOfSpikes by derivedStateOf {
+        ((durationMs * state.spikeCountPerTimestampMs) / durationBetweenTimestampMarkers).toInt()
+    }
+    val canvasWidthPx by derivedStateOf { layout.spikeTotalWidthPx * noOfSpikes }
+    val canvasWidthDp by derivedStateOf { with(density) { canvasWidthPx.toDp() } }
     val canvasOffset by derivedStateOf {
-        screenWidthDp / 2 - ((progressMs.toFloat() safeDiv durationMs.toFloat())
-            .coerceIn(0f, 1f)) * canvasWidthDp
+        screenWidth / 2 - canvasWidthPx * ((progressMs.toFloat() safeDiv durationMs.toFloat())
+            .coerceIn(0f, 1f))
     }
 
+    val canvasHeightDp = remember { with(density) { layout.canvasHeightPx.toDp() } }
     val centerMarkerPath = remember(screenWidth) {
         if (screenWidth == 0) return@remember Path()
-
         with(density) {
             val centerX = screenWidth / 2
             val vSpacing = verticalItemSpacing.toPx()
@@ -155,6 +157,7 @@ fun AudioSegmentPicker(
     ) {
         Row(
             modifier = Modifier
+                .height(canvasHeightDp)
                 .fillMaxWidth()
                 .onGloballyPositioned { layoutCoordinates ->
                     screenWidth = layoutCoordinates.size.width
@@ -183,83 +186,85 @@ fun AudioSegmentPicker(
                     )
                 }
         ) {
-            Canvas(
-                modifier = Modifier
-                    .width(canvasWidthDp)
-                    .height(layout.canvasHeight)
-                    .offset(canvasOffset)
-            ) {
-                drawableAmplitudes.forEachIndexed { index, amplitude ->
-                    val x = index * spikeTotalWidthPx
-                    val y = (state.graphHeightPx - amplitude) / 2f + layout.spikesOffset
-                    drawRoundRect(
-                        brush = SolidColor(colors.waveformColor),
-                        topLeft = Offset(x, y),
-                        size = Size(spikeWidthPx, amplitude),
-                        cornerRadius = spikeCornerRadius,
-                        style = Fill
-                    )
-
-                    // Draw timestamp markers
-                    if (index % spikeCountPerTimestampMs == 0) {
+            AnimatedVisibility(!state.processing.value) {
+                Canvas(
+                    modifier = Modifier
+                        .width(canvasWidthDp)
+                        .height(canvasHeightDp)
+                        .graphicsLayer { translationX = canvasOffset }
+                ) {
+                    drawableAmplitudes.forEachIndexed { index, amplitude ->
+                        val x = index * spikeTotalWidthPx
+                        val y = (layout.graphHeightPx - amplitude) / 2f + layout.graphY
                         drawRoundRect(
-                            brush = SolidColor(colors.markerColor),
-                            topLeft = Offset(x, layout.markerY),
-                            size = Size(spikeWidthPx, layout.markerHeight),
+                            brush = SolidColor(colors.waveformColor),
+                            topLeft = Offset(x, y),
+                            size = Size(spikeWidthPx, amplitude),
                             cornerRadius = spikeCornerRadius,
                             style = Fill
                         )
 
-                        val timeInSeconds =
-                            (index * timestampMs) / (spikeCountPerTimestampMs * 1000f)
-                        val timeText = "${timeInSeconds}s"
-                        val tm = textMeasurer.measure(timeText, markersTextStyle)
-                        val y = if (index % (2 * spikeCountPerTimestampMs) == 0) {
-                            layout.evenMarkerY
-                        } else {
-                            layout.oddMarkerY
-                        }
-
-                        drawText(
-                            textMeasurer = textMeasurer,
-                            style = markersTextStyle,
-                            text = timeText,
-                            topLeft = Offset(x - (tm.size.width.toFloat() / 2), y),
-                            size = Size(
-                                width = tm.size.width.toFloat(),
-                                height = tm.size.height.toFloat()
+                        // Draw timestamp markers
+                        if (index % spikeCountPerTimestampMs == 0) {
+                            drawRoundRect(
+                                brush = SolidColor(colors.markerColor),
+                                topLeft = Offset(x, layout.markerY),
+                                size = Size(spikeWidthPx, layout.markerHeight),
+                                cornerRadius = spikeCornerRadius,
+                                style = Fill
                             )
+
+                            val timeInSeconds =
+                                (index * durationBetweenTimestampMarkers) / (spikeCountPerTimestampMs * 1000f)
+                            val timeText = "${timeInSeconds}s"
+                            val tm = textMeasurer.measure(timeText, markersTextStyle)
+                            val y = if (index % (2 * spikeCountPerTimestampMs) == 0) {
+                                layout.evenMarkerY
+                            } else {
+                                layout.oddMarkerY
+                            }
+
+                            drawText(
+                                textMeasurer = textMeasurer,
+                                style = markersTextStyle,
+                                text = timeText,
+                                topLeft = Offset(x - (tm.size.width.toFloat() / 2), y),
+                                size = Size(
+                                    width = tm.size.width.toFloat(),
+                                    height = tm.size.height.toFloat()
+                                )
+                            )
+                        }
+                    }
+
+                    window?.let { (startPx, endPx) ->
+                        drawSegmentWindow(
+                            cornerRadius = windowCornerRadius,
+                            topLeft = Offset(startPx, layout.graphY),
+                            size = Size(endPx - startPx, graphHeightPx),
+                            colors = colors,
+                            style = Stroke(spikeWidthPx)
                         )
                     }
-                }
 
-                window?.let { (startPx, endPx) ->
-                    drawSegmentWindow(
-                        cornerRadius = windowCornerRadius,
-                        topLeft = Offset(startPx, layout.spikesOffset),
-                        size = Size(endPx - startPx, graphHeightPx),
-                        colors = colors,
-                        style = Stroke(spikeWidthPx)
-                    )
-                }
-
-                inactiveSegment.forEach { segment ->
-                    val startPx = state.durationToPx(segment.start)
-                    val endPx = state.durationToPx(segment.end)
-                    val width = endPx - startPx
-                    drawRoundRect(
-                        brush = SolidColor(colors.inactiveSelectionOutline),
-                        topLeft = Offset(x = startPx, y = layout.spikesOffset),
-                        size = Size(width, state.graphHeightPx),
-                        cornerRadius = windowCornerRadius,
-                        style = Stroke(spikeWidthPx)
-                    )
-                    drawRoundRect(
-                        color = colors.inactiveSelectionOutline.copy(0.2f),
-                        topLeft = Offset(x = startPx, y = layout.spikesOffset),
-                        size = Size(width, state.graphHeightPx),
-                        cornerRadius = windowCornerRadius,
-                    )
+                    inactiveSegment.forEach { segment ->
+                        val startPx = state.durationToPx(segment.start)
+                        val endPx = state.durationToPx(segment.end)
+                        val width = endPx - startPx
+                        drawRoundRect(
+                            brush = SolidColor(colors.inactiveSelectionOutline),
+                            topLeft = Offset(x = startPx, y = layout.graphY),
+                            size = Size(width, layout.graphHeightPx),
+                            cornerRadius = windowCornerRadius,
+                            style = Stroke(spikeWidthPx)
+                        )
+                        drawRoundRect(
+                            color = colors.inactiveSelectionOutline.copy(0.2f),
+                            topLeft = Offset(x = startPx, y = layout.graphY),
+                            size = Size(width, layout.graphHeightPx),
+                            cornerRadius = windowCornerRadius,
+                        )
+                    }
                 }
             }
         }
@@ -284,8 +289,8 @@ fun AudioSegmentPicker(
                 segment = segment,
                 isPlaying = isSegmentPlaying,
                 togglePlayback = toggleSegmentPlayback,
-                moveStart = { by -> state.addToStart(by) },
-                moveEnd = { by -> state.addToEnd(by) },
+                moveStart = { by -> coroutineScope.launch { state.addToStart(by) } },
+                moveEnd = { by -> coroutineScope.launch { state.addToEnd(by) } },
                 colors = colors
             )
         }
