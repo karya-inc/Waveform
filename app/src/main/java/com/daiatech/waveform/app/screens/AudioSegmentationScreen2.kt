@@ -156,7 +156,7 @@ fun AudioSegmentationScreen2(
                 isPlaying = isPlaying,
                 togglePlayback = {
                     // handle playback only if segment is not playing
-                    if (!isSegmentPlaying) {
+                    if (!isSegmentPlaying && !segmentPickerState.processing.value) {
                         if (isPlaying) {
                             exoPlayer.pause()
                         } else {
@@ -168,7 +168,7 @@ fun AudioSegmentationScreen2(
                 isSegmentPlaying = isSegmentPlaying,
                 toggleSegmentPlayback = {
                     // play segment only if main player is not playing
-                    if (!isPlaying) {
+                    if (!isPlaying && !segmentPickerState.processing.value) {
                         if (isSegmentPlaying) {
                             exoPlayer.pause()
                         } else {

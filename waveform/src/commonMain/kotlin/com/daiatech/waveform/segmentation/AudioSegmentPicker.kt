@@ -5,12 +5,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -51,6 +53,7 @@ import com.daiatech.karya.ui.buttons.ButtonVariation
 import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
+import com.daiatech.waveform.common.WaveformPulse
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.component.PlaybackToolbar
@@ -99,6 +102,7 @@ fun AudioSegmentPicker(
 
     val layout = remember { state.layout }
     val spikeWidthPx = remember { layout.spikeWidthPx }
+    val spikePaddingPx = remember { layout.spikePaddingPx }
     val graphHeightPx = remember { layout.graphHeightPx }
     val spikeTotalWidthPx = remember { layout.spikeTotalWidthPx }
     val spikeCornerRadius = remember { layout.spikeCornerRadius }
@@ -106,6 +110,7 @@ fun AudioSegmentPicker(
     val durationMs = remember { state.durationMs }
     val spikeCountPerTimestampMs = remember { state.spikeCountPerTimestampMs }
     val inactiveSegments = remember { state.inactive }
+    val processing by state.processing
     val window by state.window
     val segment by state.segment
     val zoom by state.zoom
@@ -170,7 +175,7 @@ fun AudioSegmentPicker(
             .fillMaxWidth()
             .background(colors.background)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .height(canvasHeightDp)
                 .fillMaxWidth()
@@ -201,7 +206,23 @@ fun AudioSegmentPicker(
                     )
                 }
         ) {
-            AnimatedVisibility(!state.processing.value) {
+            if (processing) {
+                WaveformPulse(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(with(density) { graphHeightPx.toDp() })
+                        .graphicsLayer {
+                            translationY = layout.graphY
+                            translationX = canvasOffset
+                        },
+                    color = colors.waveformColor.copy(0.2f),
+                    spikeWidthPx = spikeWidthPx.times(2),
+                    spikePaddingPx = spikePaddingPx,
+                    animationDuration = 1000
+                )
+            }
+
+            if (!processing) {
                 Canvas(
                     modifier = Modifier
                         .height(canvasHeightDp)
@@ -222,7 +243,6 @@ fun AudioSegmentPicker(
                         .coerceAtLeast(0)
                     val visibleEnd = ((visibleCanvasEnd / spikeTotalWidthPx).toInt() + 1)
                         .coerceAtMost(drawableAmplitudes.size)
-
 
                     // Draw only visible amplitudes
                     for (index in visibleStart until visibleEnd) {
