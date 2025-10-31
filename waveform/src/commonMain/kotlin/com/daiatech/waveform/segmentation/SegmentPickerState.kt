@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -92,33 +93,80 @@ class SegmentPickerState(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     suspend fun calculateDrawableAmplitudes() = withContext(Dispatchers.Default) {
         val zoomValue = _zoom.value
-        if (drawableAmplitudesStore[zoomValue] == null) {
-            val ms = millisNow
-            println("SegmentPickerState:: Processed audio Stated at $ms")
-            val deff = Zoom.entries.map { zoom ->
-                async {
-                    println("SegmentPickerState:: Processing for $zoom level at $millisNow")
-                    val x = (500 - (zoom.value - 1).times(100)).toLong()
-                    val noOfSpikes = (durationMs * SPIKE_COUNT_BETWEEN_TIMESTAMP / x).toInt()
-                    val drawableAmps = amplitudes.toDrawableAmplitudes(
-                        amplitudeType = AmplitudeType.AVG,
-                        spikes = noOfSpikes,
-                        minHeight = MIN_SPIKE_HEIGHT,
-                        maxHeight = layout.graphHeightPx
-                    )
+        if (drawableAmplitudesStore.containsKey(zoomValue)) {
+            _drawableAmplitudes.value = drawableAmplitudesStore[zoomValue]!!
+            _processing.value = false
+            return@withContext
+        }
+        val startMs = millisNow
+        println("SegmentPickerState:: Processing audio started at $startMs")
+        val priorityZooms = listOf(zoomValue) + Zoom.entries.filter { it != zoomValue }
+        val processingJobs = priorityZooms.map { zoom ->
+            async {
+                if (!drawableAmplitudesStore.containsKey(zoom)) {
+                    println("SegmentPickerState:: Processing for $zoom level")
+                    val levelStartMs = millisNow
+                    val timestampDuration = durationBetweenTwoTimestampMarkers(zoom)
+                    val noOfSpikes =
+                        (durationMs * SPIKE_COUNT_BETWEEN_TIMESTAMP / timestampDuration).toInt()
+                    val chunkSize = 5000
+                    val drawableAmps = if (noOfSpikes > chunkSize) {
+                        processAmplitudesInChunks(noOfSpikes, chunkSize)
+                    } else {
+                        amplitudes.toDrawableAmplitudes(
+                            amplitudeType = AmplitudeType.AVG,
+                            spikes = noOfSpikes,
+                            minHeight = MIN_SPIKE_HEIGHT,
+                            maxHeight = layout.graphHeightPx
+                        )
+                    }
                     drawableAmplitudesStore[zoom] = drawableAmps
-                    println("SegmentPickerState:: Processing completed for $zoom level at $millisNow")
+                    val levelEndMs = millisNow
+                    println("SegmentPickerState:: Completed $zoom in ${levelEndMs - levelStartMs}ms")
                 }
             }
-            deff.awaitAll()
-            val ms2 = Clock.System.now().toEpochMilliseconds()
-            println("SegmentPickerState:: Processed audio in ${ms2 - ms}ms")
         }
-        _processing.value = false
+        processingJobs.first().await()
         _drawableAmplitudes.value = drawableAmplitudesStore[zoomValue]!!
+        _processing.value = false
+        val endMs = millisNow
+        println("SegmentPickerState:: Initial processing complete in ${endMs - startMs}ms")
+        processingJobs.drop(1)
+            .forEach { it.await() } // Continue processing other zoom levels in background
+        val finalMs = millisNow
+        println("SegmentPickerState:: All zoom levels processed in ${finalMs - startMs}ms")
+    }
+
+    private suspend fun processAmplitudesInChunks(
+        totalSpikes: Int,
+        chunkSize: Int
+    ): List<Float> = withContext(Dispatchers.Default) {
+        val result = mutableListOf<Float>()
+        val chunks = (totalSpikes + chunkSize - 1) / chunkSize
+        for (chunkIndex in 0 until chunks) {
+            val startIdx = chunkIndex * chunkSize
+            val endIdx = minOf((chunkIndex + 1) * chunkSize, totalSpikes)
+            val chunkSpikes = endIdx - startIdx
+            // calculate which amplitudes correspond to this chunk
+            val amplitudeStartIdx = (startIdx.toLong() * amplitudes.size / totalSpikes).toInt()
+            val amplitudeEndIdx = (endIdx.toLong() * amplitudes.size / totalSpikes).toInt()
+
+            val chunkAmplitudes = amplitudes.subList(
+                amplitudeStartIdx.coerceIn(0, amplitudes.size),
+                amplitudeEndIdx.coerceIn(0, amplitudes.size)
+            )
+            val chunkDrawable = chunkAmplitudes.toDrawableAmplitudes(
+                amplitudeType = AmplitudeType.AVG,
+                spikes = chunkSpikes,
+                minHeight = MIN_SPIKE_HEIGHT,
+                maxHeight = layout.graphHeightPx
+            )
+            result.addAll(chunkDrawable)
+            yield() // Yield to allow other coroutines to run
+        }
+        result
     }
 
 
@@ -192,9 +240,13 @@ class SegmentPickerState(
     }
 }
 
+private val durationCache = mutableMapOf<Zoom, Long>()
 fun durationBetweenTwoTimestampMarkers(zoom: Zoom): Long {
-    return ((500 - (zoom.value - 1).times(100)).toLong())
+    return durationCache.getOrPut(zoom) {
+        (500 - (zoom.value - 1) * 100).toLong()
+    }
 }
+
 
 @OptIn(ExperimentalTime::class)
 val millisNow get() = Clock.System.now().toEpochMilliseconds()

@@ -19,8 +19,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -62,11 +63,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- *
- * @param colors Custom colors for waveform elements.
- * @param progressMs Current time progress in milliseconds.
- */
+
 @Composable
 fun AudioSegmentPicker(
     state: SegmentPickerState,
@@ -83,51 +80,58 @@ fun AudioSegmentPicker(
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
     val coroutineScope = rememberCoroutineScope()
-
-    val markersTextStyle = remember {
-        TextStyle(fontSize = markerFontSize, color = colors.markerColor)
-    }
-
-    var screenWidth by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) { state.calculateDrawableAmplitudes() }
 
-    val layout = state.layout
-    val spikeWidthPx = layout.spikeWidthPx
-    val graphHeightPx = layout.graphHeightPx
-    val spikeTotalWidthPx = layout.spikeTotalWidthPx
-    val spikeCornerRadius = layout.spikeCornerRadius
-    val windowCornerRadius = layout.windowCornerRadius
-    val durationMs = state.durationMs
-    val spikeCountPerTimestampMs = state.spikeCountPerTimestampMs
-    val inactiveSegment = state.inactive
-
+    val layout = remember { state.layout }
+    val spikeWidthPx = remember { layout.spikeWidthPx }
+    val graphHeightPx = remember { layout.graphHeightPx }
+    val spikeTotalWidthPx = remember { layout.spikeTotalWidthPx }
+    val spikeCornerRadius = remember { layout.spikeCornerRadius }
+    val windowCornerRadius = remember { layout.windowCornerRadius }
+    val durationMs = remember { state.durationMs }
+    val spikeCountPerTimestampMs = remember { state.spikeCountPerTimestampMs }
+    val inactiveSegments = remember { state.inactive }
     val window by state.window
     val segment by state.segment
     val zoom by state.zoom
     val drawableAmplitudes by state.drawableAmplitudes
 
-    val durationBetweenTimestampMarkers by derivedStateOf { durationBetweenTwoTimestampMarkers(zoom) }
-    val enableZoomIn by derivedStateOf { zoom != Zoom.max }
-    val enableZoomOut by derivedStateOf { zoom != Zoom.min }
-    val noOfSpikes by derivedStateOf {
-        ((durationMs * state.spikeCountPerTimestampMs) / durationBetweenTimestampMarkers).toInt()
+    var screenWidth by remember { mutableIntStateOf(0) }
+
+    val markersTextStyle = remember {
+        TextStyle(fontSize = markerFontSize, color = colors.markerColor)
     }
-    val canvasWidthPx by derivedStateOf { layout.spikeTotalWidthPx * noOfSpikes }
-    val canvasWidthDp by derivedStateOf { with(density) { canvasWidthPx.toDp() } }
-    val canvasOffset by derivedStateOf {
-        screenWidth / 2 - canvasWidthPx * ((progressMs.toFloat() safeDiv durationMs.toFloat())
-            .coerceIn(0f, 1f))
+
+    val durationBetweenTimestampMarkers = remember(zoom) {
+        durationBetweenTwoTimestampMarkers(zoom)
+    }
+
+    val noOfSpikes =
+        remember(durationMs, spikeCountPerTimestampMs, durationBetweenTimestampMarkers) {
+            ((durationMs * spikeCountPerTimestampMs) / durationBetweenTimestampMarkers).toInt()
+        }
+
+    val canvasWidthPx = remember(spikeTotalWidthPx, noOfSpikes) {
+        spikeTotalWidthPx * noOfSpikes
+    }
+
+    var canvasOffset by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(progressMs, screenWidth, canvasWidthPx, durationMs) {
+        if (screenWidth > 0) {
+            canvasOffset = screenWidth / 2 - canvasWidthPx *
+                    ((progressMs.toFloat() safeDiv durationMs.toFloat()).coerceIn(0f, 1f))
+        }
     }
 
     val canvasHeightDp = remember { with(density) { layout.canvasHeightPx.toDp() } }
-    val centerMarkerPath = remember(screenWidth) {
+
+    val centerMarkerPath = remember(screenWidth, density, spikeWidthPx) {
         if (screenWidth == 0) return@remember Path()
         with(density) {
             val centerX = screenWidth / 2
             val vSpacing = verticalItemSpacing.toPx()
             val spikeW = spikeWidthPx / 2
-            val totalHeight =
-                (vSpacing * 7 + MIN_GRAPH_HEIGHT.toPx() + 2 * markerFontSize.toPx())
+            val totalHeight = (vSpacing * 7 + MIN_GRAPH_HEIGHT.toPx() + 2 * markerFontSize.toPx())
 
             Path().apply {
                 moveTo(centerX - vSpacing, 0f)
@@ -182,13 +186,37 @@ fun AudioSegmentPicker(
             AnimatedVisibility(!state.processing.value) {
                 Canvas(
                     modifier = Modifier
-                        .width(canvasWidthDp)
                         .height(canvasHeightDp)
-                        .graphicsLayer { translationX = canvasOffset }
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            translationX = canvasOffset
+                            //compositingStrategy = CompositingStrategy.Offscreen
+                        }
                 ) {
-                    drawableAmplitudes.forEachIndexed { index, amplitude ->
+
+                    // visible range based on screen width and offset
+                    // when canvas is scrolled, we need to find which spikes are visible on screen
+                    val screenWidthPx = screenWidth.toFloat()
+                    val buffer = screenWidthPx * 0.5f // 50% buffer on each side
+                    // visible canvas range: [-canvasOffset - buffer, -canvasOffset + screenWidth + buffer]
+                    val visibleCanvasStart = -canvasOffset - buffer
+                    val visibleCanvasEnd = visibleCanvasStart + screenWidthPx + (buffer * 2)
+
+                    // Convert canvas coordinates to spike indices
+                    val visibleStart = (visibleCanvasStart / spikeTotalWidthPx).toInt()
+                        .coerceAtLeast(0)
+                    val visibleEnd = ((visibleCanvasEnd / spikeTotalWidthPx).toInt() + 1)
+                        .coerceAtMost(drawableAmplitudes.size)
+
+
+                    // Draw only visible amplitudes
+                    for (index in visibleStart until visibleEnd) {
+                        if (index >= drawableAmplitudes.size) break
+
+                        val amplitude = drawableAmplitudes[index]
                         val x = index * spikeTotalWidthPx
-                        val y = (layout.graphHeightPx - amplitude) / 2f + layout.graphY
+                        val y = (graphHeightPx - amplitude) / 2f + layout.graphY
+
                         drawRoundRect(
                             brush = SolidColor(colors.waveformColor),
                             topLeft = Offset(x, y),
@@ -240,7 +268,7 @@ fun AudioSegmentPicker(
                         )
                     }
 
-                    inactiveSegment.forEach { segment ->
+                    inactiveSegments.forEach { segment ->
                         val startPx = state.durationToPx(segment.start)
                         val endPx = state.durationToPx(segment.end)
                         val width = endPx - startPx
@@ -267,8 +295,8 @@ fun AudioSegmentPicker(
             progressMs = progressMs,
             durationMs = durationMs,
             isPlaying = isPlaying,
-            enableZoomIn = enableZoomIn,
-            enableZoomOut = enableZoomOut,
+            enableZoomIn = zoom != Zoom.max,
+            enableZoomOut = zoom != Zoom.min,
             speed = speed,
             togglePlayback = togglePlayback,
             onZoomIn = { coroutineScope.launch { state.zoomIn() } },
