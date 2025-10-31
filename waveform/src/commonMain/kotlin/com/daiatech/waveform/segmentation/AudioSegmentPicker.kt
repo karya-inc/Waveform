@@ -34,7 +34,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -63,7 +62,23 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
+/**
+ * Audio waveform segment picker with playback controls
+ *
+ * Displays scrollable waveform with zoom, playback, and segment selection.
+ * Shows timestamp markers, inactive segments, and center playhead indicator.
+ *
+ * @param state segment picker state managing waveform and selection
+ * @param progressMs current playback position in milliseconds
+ * @param isPlaying whether full audio is playing
+ * @param togglePlayback toggles full audio playback
+ * @param isSegmentPlaying whether selected segment is playing
+ * @param toggleSegmentPlayback toggles segment playback
+ * @param seek adjusts playback position by milliseconds
+ * @param speed current playback speed
+ * @param updateSpeed updates playback speed
+ * @param colors color scheme for UI elements
+ */
 @Composable
 fun AudioSegmentPicker(
     state: SegmentPickerState,
@@ -106,10 +121,13 @@ fun AudioSegmentPicker(
         durationBetweenTwoTimestampMarkers(zoom)
     }
 
-    val noOfSpikes =
-        remember(durationMs, spikeCountPerTimestampMs, durationBetweenTimestampMarkers) {
-            ((durationMs * spikeCountPerTimestampMs) / durationBetweenTimestampMarkers).toInt()
-        }
+    val noOfSpikes = remember(
+        durationMs,
+        spikeCountPerTimestampMs,
+        durationBetweenTimestampMarkers
+    ) {
+        ((durationMs * spikeCountPerTimestampMs) / durationBetweenTimestampMarkers).toInt()
+    }
 
     val canvasWidthPx = remember(spikeTotalWidthPx, noOfSpikes) {
         spikeTotalWidthPx * noOfSpikes
@@ -188,10 +206,7 @@ fun AudioSegmentPicker(
                     modifier = Modifier
                         .height(canvasHeightDp)
                         .fillMaxWidth()
-                        .graphicsLayer {
-                            translationX = canvasOffset
-                            //compositingStrategy = CompositingStrategy.Offscreen
-                        }
+                        .graphicsLayer { translationX = canvasOffset }
                 ) {
 
                     // visible range based on screen width and offset
@@ -318,6 +333,18 @@ fun AudioSegmentPicker(
     }
 }
 
+/**
+ * Draws segment selection window with trim handles
+ *
+ * Renders semi-transparent overlay, outline, and circular trim handles
+ * at start and end positions.
+ *
+ * @param cornerRadius corner radius for rounded rectangle
+ * @param topLeft top-left position of window
+ * @param size dimensions of window
+ * @param colors color scheme for window elements
+ * @param style stroke style for outline
+ */
 fun DrawScope.drawSegmentWindow(
     cornerRadius: CornerRadius,
     topLeft: Offset,
@@ -366,6 +393,14 @@ fun DrawScope.drawSegmentWindow(
     )
 }
 
+/**
+ * Preview of audio segment picker with mock data
+ *
+ * Demonstrates full functionality with simulated playback,
+ * segment selection, and controls.
+ *
+ * @param colors color scheme for UI elements
+ */
 @Composable
 fun AudioSegmentPickerPreview(
     colors: SegmentationColors = segmentationColors()

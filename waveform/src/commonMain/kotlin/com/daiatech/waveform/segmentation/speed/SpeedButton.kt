@@ -24,6 +24,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+/**
+ * Dropdown button for playback speed selection
+ *
+ * Displays current speed with dropdown arrow.
+ * Opens menu with available speed options on click.
+ *
+ * @param modifier modifier for button container
+ * @param availableSpeeds list of speed options to display
+ * @param selectedSpeed currently selected speed
+ * @param onSpeedUpdate invoked when speed is selected
+ * @param containerColor background color of button
+ * @param contentColor color of text and icon
+ */
 @Composable
 fun SpeedButton(
     modifier: Modifier = Modifier,
@@ -68,9 +81,13 @@ fun SpeedButton(
             )
         }
     }
-
 }
 
+/**
+ * Preview of speed button
+ *
+ * Demonstrates button with all available speeds, 1.00x selected.
+ */
 @Composable
 fun SpeedButtonPreview() {
     Surface {

@@ -25,6 +25,18 @@ import com.daiatech.waveform.fizoomin
 import com.daiatech.waveform.fizoomout
 import org.jetbrains.compose.resources.painterResource
 
+/**
+ * Dual-button control for zoom in/out
+ *
+ * Displays zoom in and zoom out buttons side by side
+ * with enabled/disabled states.
+ *
+ * @param modifier modifier for button container
+ * @param onZoomIn invoked when zoom in clicked
+ * @param onZoomOut invoked when zoom out clicked
+ * @param enableZoomIn whether zoom in is enabled
+ * @param enableZoomOut whether zoom out is enabled
+ */
 @Composable
 fun ZoomButton(
     modifier: Modifier = Modifier,
@@ -53,6 +65,18 @@ fun ZoomButton(
     }
 }
 
+/**
+ * Individual zoom button item
+ *
+ * Displays icon with background that changes opacity based on enabled state.
+ *
+ * @param modifier modifier for button container
+ * @param onClick invoked when button clicked
+ * @param enabled whether button is enabled
+ * @param icon icon painter
+ * @param tint icon tint color
+ * @param contentDescription accessibility description
+ */
 @Composable
 fun ZoomButtonItem(
     modifier: Modifier = Modifier,
@@ -78,6 +102,11 @@ fun ZoomButtonItem(
     }
 }
 
+/**
+ * Preview of zoom button
+ *
+ * Demonstrates button with zoom in enabled and zoom out disabled.
+ */
 @Composable
 fun ZoomButtonPreview() {
     var zoomLevel by remember { mutableStateOf(1f) }

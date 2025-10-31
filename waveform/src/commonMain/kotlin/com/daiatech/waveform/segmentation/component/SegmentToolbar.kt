@@ -46,6 +46,20 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
+/**
+ * Toolbar for selected segment controls
+ *
+ * Displays segment start/end times with adjustment buttons,
+ * playback control, and duration in three-column layout.
+ *
+ * @param modifier modifier for toolbar container
+ * @param segment selected segment with start and end times
+ * @param isPlaying whether segment is currently playing
+ * @param togglePlayback toggles segment playback
+ * @param moveStart adjusts segment start by milliseconds
+ * @param moveEnd adjusts segment end by milliseconds
+ * @param colors color scheme for UI elements
+ */
 @Composable
 fun SegmentToolbar(
     modifier: Modifier = Modifier,
@@ -123,6 +137,17 @@ fun SegmentToolbar(
     }
 }
 
+/**
+ * Dual-button control for adjusting segment position
+ *
+ * Displays backward/forward buttons with divider.
+ * Supports single tap and long press for continuous adjustment.
+ *
+ * @param containerColor background color of buttons
+ * @param outlineColor border and divider color
+ * @param contentColor icon tint color
+ * @param move invoked with milliseconds to adjust (positive or negative)
+ */
 @Composable
 private fun MoveHandleButtons(
     containerColor: Color,
@@ -168,9 +193,17 @@ private fun MoveHandleButtons(
 }
 
 /**
- * Captures pointer input.
- * On Long press and hold, calls onChange continuously with a delay of 10ms until click is released
- * On Single Tap, onChange is called on time.
+ * Modifier for segment position adjustment with tap and long press
+ *
+ * Single tap invokes onChange once with singleTap value.
+ * Long press invokes onChange continuously every 10ms with longTap value
+ * until pointer is released.
+ *
+ * @param coroutineScope scope for launching continuous update job
+ * @param key key for pointerInput stability
+ * @param longTap milliseconds per update during long press
+ * @param singleTap milliseconds for single tap
+ * @param onChange invoked with adjustment value
  */
 fun Modifier.changeSegmentPosition(
     coroutineScope: CoroutineScope,
@@ -200,7 +233,13 @@ fun Modifier.changeSegmentPosition(
     )
 }
 
-
+/**
+ * Preview of segment toolbar
+ *
+ * Demonstrates toolbar with segment from 1000ms to 1500ms.
+ *
+ * @param colors color scheme for UI elements
+ */
 @Composable
 fun SegmentToolbarPreview(
     colors: SegmentationColors = segmentationColors()

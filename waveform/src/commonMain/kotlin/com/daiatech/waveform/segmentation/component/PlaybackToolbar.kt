@@ -31,6 +31,25 @@ import com.daiatech.waveform.segmentation.speed.SpeedButton
 import com.daiatech.waveform.segmentation.zoom.ZoomButton
 import org.jetbrains.compose.resources.painterResource
 
+/**
+ * Toolbar for audio playback controls
+ *
+ * Provides speed selection, play/pause toggle, progress display,
+ * and zoom controls in a horizontal layout.
+ *
+ * @param modifier modifier for toolbar container
+ * @param colors color scheme for UI elements
+ * @param progressMs current playback position in milliseconds
+ * @param durationMs total audio duration in milliseconds
+ * @param isPlaying whether audio is currently playing
+ * @param enableZoomIn whether zoom in is available
+ * @param enableZoomOut whether zoom out is available
+ * @param speed current playback speed
+ * @param togglePlayback toggles play/pause state
+ * @param onZoomIn invoked when zoom in requested
+ * @param onZoomOut invoked when zoom out requested
+ * @param updateSpeed invoked when speed changes
+ */
 @Composable
 fun PlaybackToolbar(
     modifier: Modifier = Modifier,
@@ -100,6 +119,11 @@ fun PlaybackToolbar(
     }
 }
 
+/**
+ * Preview of playback toolbar
+ *
+ * Demonstrates toolbar with mock playback state at 30s of 60s duration.
+ */
 @Composable
 fun PlaybackToolbarPreview() {
     PlaybackToolbar(
