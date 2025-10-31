@@ -210,10 +210,18 @@ class SegmentPickerState(
         result
     }
 
+    /*************************************************************
+     *                   User Interactions                       *
+     *************************************************************/
+
     /**
      * Increases zoom level and recalculates amplitudes
      */
     suspend fun zoomIn() {
+        if (processing.value) {
+            println("Cannot zoom in, processing...")
+            return
+        }
         _zoom.value = _zoom.value.increment()
         calculateDrawableAmplitudes()
     }
@@ -222,31 +230,12 @@ class SegmentPickerState(
      * Decreases zoom level and recalculates amplitudes
      */
     suspend fun zoomOut() {
+        if (processing.value) {
+            println("Cannot zoom out, processing...")
+            return
+        }
         _zoom.value = _zoom.value.decrement()
         calculateDrawableAmplitudes()
-    }
-
-
-    /**
-     * Converts duration to pixel position
-     *
-     * @param dur duration in milliseconds
-     * @return position in pixels
-     */
-    fun durationToPx(dur: Long): Float {
-        return (layout.spikeTotalWidthPx * spikeCountPerTimestampMs * dur) /
-                durationBetweenTwoTimestampMarkers(zoom.value)
-    }
-
-    /**
-     * Converts pixel position to duration
-     *
-     * @param px position in pixels
-     * @return duration in milliseconds
-     */
-    fun pxToDuration(px: Float): Long {
-        return ((durationBetweenTwoTimestampMarkers(zoom.value) * px) /
-                (layout.spikeTotalWidthPx * spikeCountPerTimestampMs)).toLong()
     }
 
     /**
@@ -258,6 +247,11 @@ class SegmentPickerState(
      * @param start start time in milliseconds
      */
     fun addSegment(start: Long) {
+        if (processing.value) {
+            println("Cannot add segment, processing...")
+            return
+        }
+
         if (_segment.value != null) {
             println("Cannot add segment, start is before last inactive end")
             return
@@ -288,6 +282,10 @@ class SegmentPickerState(
      * @param by milliseconds to add (negative to subtract)
      */
     fun addToStart(by: Int) {
+        if(processing.value) {
+            println("Cannot move segment, processing...")
+            return
+        }
         val current = _segment.value ?: return
         val minStart = inactive.lastOrNull()?.end ?: 0
         val newStart = (current.start + by).coerceIn(minStart, current.end - minimumSegmentDuration)
@@ -303,10 +301,41 @@ class SegmentPickerState(
      * @param by milliseconds to add (negative to subtract)
      */
     fun addToEnd(by: Int) {
+        if(processing.value) {
+            println("Cannot move segment, processing...")
+            return
+        }
         val current = _segment.value ?: return
         val newEnd = (current.end + by).coerceIn(current.start + minimumSegmentDuration, durationMs)
         _segment.value = current.copy(end = newEnd)
     }
+
+    /*************************************************************
+     *                   Utility Functions                       *
+     *************************************************************/
+
+    /**
+     * Converts duration to pixel position
+     *
+     * @param dur duration in milliseconds
+     * @return position in pixels
+     */
+    fun durationToPx(dur: Long): Float {
+        return (layout.spikeTotalWidthPx * spikeCountPerTimestampMs * dur) /
+                durationBetweenTwoTimestampMarkers(zoom.value)
+    }
+
+    /**
+     * Converts pixel position to duration
+     *
+     * @param px position in pixels
+     * @return duration in milliseconds
+     */
+    fun pxToDuration(px: Float): Long {
+        return ((durationBetweenTwoTimestampMarkers(zoom.value) * px) /
+                (layout.spikeTotalWidthPx * spikeCountPerTimestampMs)).toLong()
+    }
+
 }
 
 private val durationCache = mutableMapOf<Zoom, Long>()
