@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -37,6 +38,8 @@ import com.daiatech.waveform.segmentation.AudioSegmentPicker
 import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.segmentation.rememberSegmentPickerState
 import com.daiatech.waveform.segmentation.segmentationColors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun AudioSegmentationScreen2(
@@ -83,10 +86,12 @@ fun AudioSegmentationScreen2(
 
             val runnable = object : Runnable {
                 override fun run() {
-                    progressMs = exoPlayer.currentPosition
+                    val currentPosition = exoPlayer.currentPosition
+                    progressMs = currentPosition
+                    println("rendering canvas progressMs: $progressMs")
                     if (isSegmentPlaying) {
                         segment.value?.let { segment ->
-                            if (progressMs >= segment.end) {
+                            if (currentPosition >= segment.end) {
                                 isSegmentPlaying = false
                                 exoPlayer.pause()
                                 exoPlayer.seekTo(segment.start)
@@ -176,7 +181,7 @@ fun AudioSegmentationScreen2(
                     }
                 },
                 seek = { deltaMs ->
-                    if (exoPlayer.isPlaying) exoPlayer.stop()
+                    if (exoPlayer.isPlaying) exoPlayer.pause()
                     val newPosition = (progressMs + deltaMs).coerceIn(0, duration)
                     exoPlayer.seekTo(newPosition)
                     progressMs = newPosition
