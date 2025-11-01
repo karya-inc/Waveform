@@ -12,8 +12,8 @@ enum class Zoom(val value: Int) {
     X1(1),
 
     /** 2x zoom level */
-    X2(2);
-//    X3(3),
+    X2(2),
+    X3(3);
 //    X4(4),
 //    X5(5);
 
@@ -25,8 +25,8 @@ enum class Zoom(val value: Int) {
     fun increment(): Zoom {
         return when (this) {
             X1 -> X2
-            X2 -> X2
-//           X3 -> X4
+            X2 -> X3
+            X3 -> X3
 //           X4 -> X5
 //           X5 -> X5
         }
@@ -41,7 +41,7 @@ enum class Zoom(val value: Int) {
         return when (this) {
             X1 -> X1
             X2 -> X1
-//            X3 -> X2
+            X3 -> X2
 //            X4 -> X3
 //            X5 -> X4
         }
@@ -49,7 +49,7 @@ enum class Zoom(val value: Int) {
 
     companion object {
         /** Maximum zoom level */
-        val max get() = X2
+        val max get() = X3
 
         /** Minimum zoom level */
         val min get() = X1

@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -108,10 +107,8 @@ fun AudioSegmentPicker(
     val spikeCornerRadius = remember { layout.spikeCornerRadius }
     val windowCornerRadius = remember { layout.windowCornerRadius }
     val durationMs = remember { state.durationMs }
-    val spikeCountPerTimestampMs = remember { state.spikeCountPerTimestampMs }
     val inactiveSegments = remember { state.inactive }
     val processing by state.processing
-    val window by state.window
     val segment by state.segment
     val zoom by state.zoom
     val drawableAmplitudes by state.drawableAmplitudes
@@ -122,16 +119,15 @@ fun AudioSegmentPicker(
         TextStyle(fontSize = markerFontSize, color = colors.markerColor)
     }
 
-    val durationBetweenTimestampMarkers = remember(zoom) {
-        durationBetweenTwoTimestampMarkers(zoom)
+    val spikesCountBetweenTwoTimestampMarkers = remember(zoom) {
+        noOfSpikesInTwoTimestamps(zoom)
     }
 
     val noOfSpikes = remember(
         durationMs,
-        spikeCountPerTimestampMs,
-        durationBetweenTimestampMarkers
+        spikesCountBetweenTwoTimestampMarkers
     ) {
-        ((durationMs * spikeCountPerTimestampMs) / durationBetweenTimestampMarkers).toInt()
+        ((spikesCountBetweenTwoTimestampMarkers * durationMs) / DURATION_MS_BETWEEN_TIMESTAMP).toInt()
     }
 
     val canvasWidthPx = remember(spikeTotalWidthPx, noOfSpikes) {
@@ -260,8 +256,9 @@ fun AudioSegmentPicker(
                             style = Fill
                         )
 
-                        // Draw timestamp markers
-                        if (index % spikeCountPerTimestampMs == 0) {
+                        val timeInSeconds = state.pxToDuration(x).toFloat() / 1000
+                        // draw timestamp each 0.5s: 0, 0.5, 1.0, 1.5, 2.0 ...
+                        if (((timeInSeconds * 100).toInt() % 50) == 0) {
                             drawRoundRect(
                                 brush = SolidColor(colors.markerColor),
                                 topLeft = Offset(x, layout.markerY),
@@ -270,11 +267,9 @@ fun AudioSegmentPicker(
                                 style = Fill
                             )
 
-                            val timeInSeconds =
-                                (index * durationBetweenTimestampMarkers) / (spikeCountPerTimestampMs * 1000f)
                             val timeText = "${timeInSeconds}s"
                             val tm = textMeasurer.measure(timeText, markersTextStyle)
-                            val y = if (index % (2 * spikeCountPerTimestampMs) == 0) {
+                            val y = if ((2 * timeInSeconds).toInt() % 2 == 0) {
                                 layout.evenMarkerY
                             } else {
                                 layout.oddMarkerY
@@ -293,11 +288,15 @@ fun AudioSegmentPicker(
                         }
                     }
 
-                    window?.let { (startPx, endPx) ->
+                    segment?.let { segment ->
+                        val startPx = state.durationToPx(segment.start)
+                        val endPx = state.durationToPx(segment.end)
+                        val width = endPx - startPx
+                        println("SegmentPickerState:: Window: $startPx, $endPx")
                         drawSegmentWindow(
                             cornerRadius = windowCornerRadius,
                             topLeft = Offset(startPx, layout.graphY),
-                            size = Size(endPx - startPx, graphHeightPx),
+                            size = Size(width, graphHeightPx),
                             colors = colors,
                             style = Stroke(spikeWidthPx)
                         )
@@ -310,7 +309,7 @@ fun AudioSegmentPicker(
                         drawRoundRect(
                             brush = SolidColor(colors.inactiveSelectionOutline),
                             topLeft = Offset(x = startPx, y = layout.graphY),
-                            size = Size(width, layout.graphHeightPx),
+                            size = Size(width, graphHeightPx),
                             cornerRadius = windowCornerRadius,
                             style = Stroke(spikeWidthPx)
                         )

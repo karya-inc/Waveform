@@ -2,7 +2,6 @@ package com.daiatech.waveform.segmentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
@@ -17,10 +16,12 @@ import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import kotlin.math.pow
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -37,7 +38,7 @@ internal val verticalItemSpacing: Dp = 8.dp
 /**
  * No of spikes between two timestamp markers.
  */
-private const val SPIKE_COUNT_BETWEEN_TIMESTAMP: Int = 10
+internal const val DURATION_MS_BETWEEN_TIMESTAMP: Int = 500
 
 /**
  * State holder for waveform segment picker
@@ -103,23 +104,11 @@ class SegmentPickerState(
     /** Whether amplitudes are being processed */
     val processing: State<Boolean> = _processing
 
-    /** Number of spikes between two timestamp markers */
-    val spikeCountPerTimestampMs = SPIKE_COUNT_BETWEEN_TIMESTAMP
-
     /** Processed amplitude values ready for drawing */
     val drawableAmplitudes: State<List<Float>> = _drawableAmplitudes
 
     /** Current selected segment */
     val segment: State<Segment?> = _segment
-
-    /** Selected segment window in pixels (start, end) */
-    val window = derivedStateOf {
-        _segment.value?.let {
-            val startPx = durationToPx(it.start)
-            val endPx = durationToPx(it.end)
-            Pair(startPx, endPx)
-        }
-    }
 
     /**
      * Calculates drawable amplitudes for current zoom level
@@ -127,6 +116,7 @@ class SegmentPickerState(
      * Prioritizes current zoom, then processes others in background.
      * Uses chunking for large spike counts to prevent memory issues.
      */
+    private var processingJobs: List<Deferred<Unit>> = listOf()
     suspend fun calculateDrawableAmplitudes() = withContext(Dispatchers.Default) {
         val zoomValue = _zoom.value
         if (drawableAmplitudesStore.containsKey(zoomValue)) {
@@ -137,14 +127,17 @@ class SegmentPickerState(
         val startMs = millisNow
         println("SegmentPickerState:: Processing audio started at $startMs")
         val priorityZooms = listOf(zoomValue) + Zoom.entries.filter { it != zoomValue }
-        val processingJobs = priorityZooms.map { zoom ->
+        if (processingJobs.isNotEmpty()) {
+            println("SegmentPickerState:: Already processing, returning")
+            return@withContext
+        }
+        processingJobs = priorityZooms.map { zoom ->
             async {
                 if (!drawableAmplitudesStore.containsKey(zoom)) {
                     println("SegmentPickerState:: Processing for $zoom level")
                     val levelStartMs = millisNow
-                    val timestampDuration = durationBetweenTwoTimestampMarkers(zoom)
-                    val noOfSpikes =
-                        (durationMs * SPIKE_COUNT_BETWEEN_TIMESTAMP / timestampDuration).toInt()
+                    val noOfSpikes = (noOfSpikesInTwoTimestamps(zoom) * durationMs
+                            / DURATION_MS_BETWEEN_TIMESTAMP).toInt()
                     val chunkSize = 5000
                     val drawableAmps = if (noOfSpikes > chunkSize) {
                         processAmplitudesInChunks(noOfSpikes, chunkSize)
@@ -282,7 +275,7 @@ class SegmentPickerState(
      * @param by milliseconds to add (negative to subtract)
      */
     fun addToStart(by: Int) {
-        if(processing.value) {
+        if (processing.value) {
             println("Cannot move segment, processing...")
             return
         }
@@ -301,7 +294,7 @@ class SegmentPickerState(
      * @param by milliseconds to add (negative to subtract)
      */
     fun addToEnd(by: Int) {
-        if(processing.value) {
+        if (processing.value) {
             println("Cannot move segment, processing...")
             return
         }
@@ -321,8 +314,14 @@ class SegmentPickerState(
      * @return position in pixels
      */
     fun durationToPx(dur: Long): Float {
-        return (layout.spikeTotalWidthPx * spikeCountPerTimestampMs * dur) /
-                durationBetweenTwoTimestampMarkers(zoom.value)
+        /*
+         * noOfPixelsInDurMs
+         * = noOfPixelsIn1Ms * dur
+         * = (noOfPixelsInTwoTimestamps / durationBetweenTwoTimestamps) * dur
+         * = (noOfSpikesInTwoTimestamps * noOfPxInOneSpike) / durationBetweenTwoTimestamps * dur
+         * = (noOfSpikesInTwoTimestamps * noOfPxInOneSpike * dur / durationBetweenTwoTimestamps)
+         */
+        return (noOfSpikesInTwoTimestamps(zoom.value) * layout.spikeTotalWidthPx * dur) / DURATION_MS_BETWEEN_TIMESTAMP
     }
 
     /**
@@ -332,24 +331,27 @@ class SegmentPickerState(
      * @return duration in milliseconds
      */
     fun pxToDuration(px: Float): Long {
-        return ((durationBetweenTwoTimestampMarkers(zoom.value) * px) /
-                (layout.spikeTotalWidthPx * spikeCountPerTimestampMs)).toLong()
+        /*
+         * durationInPx
+         * = durationIn1Px * px
+         * = (durationBetweenTwoTimestamps / pixelsBetweenTwoTimestamps) * px
+         * = (durationBetweenTwoTimestamps * px / pixelsBetweenTwoTimestamps)
+         * = ((durationBetweenTwoTimestamps * px) / (noOfSpikesInTwoTimestamps * noOfPxInOneSpike))
+         */
+        return ((px * DURATION_MS_BETWEEN_TIMESTAMP) /
+                (noOfSpikesInTwoTimestamps(zoom.value) * layout.spikeTotalWidthPx)).toLong()
     }
 
 }
 
-private val durationCache = mutableMapOf<Zoom, Long>()
-
 /**
- * Calculates duration between timestamp markers for zoom level
+ * Returns the number of spikes to be drawn between two timestamp markers
  *
  * @param zoom zoom level
  * @return duration in milliseconds
  */
-fun durationBetweenTwoTimestampMarkers(zoom: Zoom): Long {
-    return durationCache.getOrPut(zoom) {
-        (500 - (zoom.value - 1) * 100).toLong()
-    }
+fun noOfSpikesInTwoTimestamps(zoom: Zoom): Int {
+    return (10 * (2f).pow(zoom.value - 1).toInt())
 }
 
 /**
