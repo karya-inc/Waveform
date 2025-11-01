@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowLeft
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -32,9 +32,10 @@ import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.Res
-import com.daiatech.waveform.mdarrowforwardios
 import com.daiatech.waveform.mdarrowbackwardios
+import com.daiatech.waveform.mdarrowforwardios
 import com.daiatech.waveform.models.Segment
+import com.daiatech.waveform.segmentation.EnableSegmentButton
 import com.daiatech.waveform.segmentation.SegmentationColors
 import com.daiatech.waveform.segmentation.segmentationColors
 import com.daiatech.waveform.toMinSecMs
@@ -68,6 +69,7 @@ fun SegmentToolbar(
     togglePlayback: () -> Unit,
     moveStart: (by: Int) -> Unit,
     moveEnd: (by: Int) -> Unit,
+    enabled: EnableSegmentButton,
     colors: SegmentationColors
 ) {
 
@@ -80,9 +82,11 @@ fun SegmentToolbar(
             Spacer(Modifier.height(8.dp))
             MoveHandleButtons(
                 containerColor = colors.trimHandleStart,
-                outlineColor = colors.trimHandleStart,
+                outlineColor = colors.moveStartColor,
                 contentColor = colors.contentPrimary,
-                move = moveStart
+                move = moveStart,
+                enableLeft = enabled.startLeft,
+                enableRight = enabled.startRight
             )
             Spacer(Modifier.height(2.dp))
             Text(text = toMinSecMs(segment.start), color = colors.contentPrimary)
@@ -127,9 +131,11 @@ fun SegmentToolbar(
             Spacer(Modifier.height(8.dp))
             MoveHandleButtons(
                 containerColor = colors.trimHandleEnd,
-                outlineColor = colors.trimHandleEnd,
+                outlineColor = colors.moveEndColor,
                 contentColor = colors.contentPrimary,
-                move = moveEnd
+                move = moveEnd,
+                enableLeft = enabled.endLeft,
+                enableRight = enabled.endRight
             )
             Spacer(Modifier.height(2.dp))
             Text(text = toMinSecMs(segment.end), color = colors.contentPrimary)
@@ -153,18 +159,22 @@ private fun MoveHandleButtons(
     containerColor: Color,
     outlineColor: Color,
     contentColor: Color,
+    enableLeft: Boolean,
+    enableRight: Boolean,
     move: (by: Int) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    Row(
-        Modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, outlineColor, RoundedCornerShape(8.dp))
-            .background(containerColor, RoundedCornerShape(8.dp))
-    ) {
+    Row {
         Box(
             modifier = Modifier
+                .clip(RoundedCornerShape(8.dp, 0.dp, 0.dp, 8.dp))
+                .background(containerColor.withState(enableLeft))
                 .changeSegmentPosition(coroutineScope, Unit) { move(-it) }
+                .border(
+                    2.dp,
+                    outlineColor.withState(enableLeft),
+                    RoundedCornerShape(8.dp, 0.dp, 0.dp, 8.dp)
+                )
                 .padding(8.dp)
         ) {
             Icon(
@@ -175,11 +185,16 @@ private fun MoveHandleButtons(
             )
         }
         Box(
-            Modifier.width(2.dp).height(40.dp).background(outlineColor)
-        ) // 8dp padding + 24dp icon + 8dp padding
-        Box(
             modifier = Modifier
+                .offset(x = -(2.dp)) // overlap the borders
+                .clip(RoundedCornerShape(0.dp, 8.dp, 8.dp, 0.dp))
+                .background(containerColor.withState(enableRight))
                 .changeSegmentPosition(coroutineScope, Unit) { move(it) }
+                .border(
+                    2.dp,
+                    outlineColor.withState(enableLeft),
+                    RoundedCornerShape(0.dp, 8.dp, 8.dp, 0.dp)
+                )
                 .padding(8.dp)
         ) {
             Icon(
@@ -191,6 +206,8 @@ private fun MoveHandleButtons(
         }
     }
 }
+
+private fun Color.withState(enabled: Boolean) = if (enabled) this else this.copy(0.5f)
 
 /**
  * Modifier for segment position adjustment with tap and long press
@@ -251,6 +268,7 @@ fun SegmentToolbarPreview(
         togglePlayback = {},
         moveStart = {},
         moveEnd = {},
-        colors = colors
+        colors = colors,
+        enabled = EnableSegmentButton.all
     )
 }

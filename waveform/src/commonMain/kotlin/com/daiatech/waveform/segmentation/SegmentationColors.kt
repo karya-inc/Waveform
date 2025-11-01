@@ -2,6 +2,7 @@ package com.daiatech.waveform.segmentation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import com.daiatech.karya.ui.theme.KaryaTheme
 
 /**
  * Data class to represent the full color scheme for the audio editing component.
@@ -17,6 +18,8 @@ data class SegmentationColors(
     val inactiveSelectionOutline: Color,  // The gray-green selection box outline for inactive segment
     val trimHandleStart: Color,           // The blue start handle
     val trimHandleEnd: Color,             // The olive green end handle
+    val moveStartColor: Color,
+    val moveEndColor: Color,
     val buttonBackgroundPrimary: Color,   // Dark Grey button background
     val buttonBackgroundPlay: Color,      // White play button circle
     val iconSecondary: Color,             // White icons inside the dark grey buttons
@@ -39,6 +42,8 @@ fun segmentationColors(
     inactiveSelectionOutline: Color = Color(0xFF959595), // Yellow-Green
     trimHandleStart: Color = Color(0xFF007BCB), // Bright Blue
     trimHandleEnd: Color = Color(0xFF688010), // Olive Green
+    moveStartColor: Color = KaryaTheme.colorScheme.tertiary50,
+    moveEndColor: Color = KaryaTheme.colorScheme.secondary50,
     buttonBackgroundPrimary: Color = Color(0xFF222222), // Dark Grey
     buttonBackgroundPlay: Color = Color(0xFFFFFFFF), // White
     iconSecondary: Color = Color(0xFFFFFFFF), // White
@@ -55,6 +60,8 @@ fun segmentationColors(
         inactiveSelectionOutline = inactiveSelectionOutline,
         trimHandleStart = trimHandleStart,
         trimHandleEnd = trimHandleEnd,
+        moveStartColor = moveStartColor,
+        moveEndColor = moveEndColor,
         buttonBackgroundPrimary = buttonBackgroundPrimary,
         buttonBackgroundPlay = buttonBackgroundPlay,
         iconSecondary = iconSecondary,

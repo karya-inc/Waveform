@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -48,7 +48,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import com.daiatech.karya.ui.buttons.ButtonVariation
+import com.daiatech.karya.ui.buttons.ButtonVariants
+import com.daiatech.karya.ui.buttons.IconButtonVariants
 import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
@@ -181,9 +182,11 @@ fun AudioSegmentPicker(
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
-                            val seekBy = state.pxToDuration(dragAmount)
-                            seek(-seekBy) // left swipe means seek forward and conversely
-                            change.consume()
+                            if(!processing) {
+                                val seekBy = state.pxToDuration(dragAmount)
+                                seek(-seekBy) // left swipe means seek forward and conversely
+                                change.consume()
+                            }
                         }
                     )
                 }
@@ -346,7 +349,8 @@ fun AudioSegmentPicker(
                 togglePlayback = toggleSegmentPlayback,
                 moveStart = { by -> coroutineScope.launch { state.addToStart(by) } },
                 moveEnd = { by -> coroutineScope.launch { state.addToEnd(by) } },
-                colors = colors
+                colors = colors,
+                enabled = state.enabledButtons(segment)
             )
         }
     }
@@ -512,7 +516,7 @@ fun AudioSegmentPickerPreview(
                 AnimatedVisibility(visible = state.segment.value == null) {
                     KButton(
                         content = "Add Segment",
-                        buttonVariation = ButtonVariation.PrimaryButtonRegular,
+                        variant = ButtonVariants.primaryRegular,
                         onClick = { state.addSegment(progressMs) }
                     )
                 }
@@ -521,19 +525,14 @@ fun AudioSegmentPickerPreview(
                     Row(Modifier.fillMaxWidth()) {
                         KIconButton(
                             onClick = { state.removeSegment() },
-                            content = {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = null
-                                )
-                            },
-                            buttonVariation = ButtonVariation.IconSecondaryButtonRegular
+                            painter = rememberVectorPainter(Icons.Default.Delete),
+                            variant = IconButtonVariants.secondaryRegular
                         )
                         Spacer(Modifier.width(8.dp))
                         KButton(
                             modifier = Modifier.weight(1f),
                             content = "Submit Segment",
-                            buttonVariation = ButtonVariation.PrimaryButtonRegular,
+                            variant = ButtonVariants.primaryRegular,
                             onClick = { }
                         )
                     }

@@ -1,6 +1,7 @@
 package com.daiatech.waveform.segmentation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -342,6 +343,38 @@ class SegmentPickerState(
                 (noOfSpikesInTwoTimestamps(zoom.value) * layout.spikeTotalWidthPx)).toLong()
     }
 
+    @Stable
+    fun enabledButtons(segment: Segment): EnableSegmentButton {
+        val start = segment.start
+        val end = segment.end
+        val enableStartLeft = start > (inactive.lastOrNull()?.end ?: 0)
+        val enableStartRight = (end - start) > minimumSegmentDuration
+        val enableEndLeft = (end - start) > minimumSegmentDuration
+        val enableEndRight = end < durationMs
+        return EnableSegmentButton(
+            startLeft = enableStartLeft,
+            startRight = enableStartRight,
+            endLeft = enableEndLeft,
+            endRight = enableEndRight
+        )
+    }
+}
+
+@Stable
+data class EnableSegmentButton(
+    val startLeft: Boolean,
+    val startRight: Boolean,
+    val endLeft: Boolean,
+    val endRight: Boolean
+) {
+    companion object {
+        val all = EnableSegmentButton(
+            startLeft = true,
+            startRight = true,
+            endLeft = true,
+            endRight = true
+        )
+    }
 }
 
 /**
