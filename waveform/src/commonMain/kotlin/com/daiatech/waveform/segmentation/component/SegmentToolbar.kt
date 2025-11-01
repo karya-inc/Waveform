@@ -32,12 +32,15 @@ import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.Res
+import com.daiatech.waveform.end
 import com.daiatech.waveform.mdarrowbackwardios
 import com.daiatech.waveform.mdarrowforwardios
 import com.daiatech.waveform.models.Segment
+import com.daiatech.waveform.n_segments_added
 import com.daiatech.waveform.segmentation.EnableSegmentButton
 import com.daiatech.waveform.segmentation.SegmentationColors
 import com.daiatech.waveform.segmentation.segmentationColors
+import com.daiatech.waveform.start
 import com.daiatech.waveform.toMinSecMs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +49,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * Toolbar for selected segment controls
@@ -65,6 +70,7 @@ import org.jetbrains.compose.resources.painterResource
 fun SegmentToolbar(
     modifier: Modifier = Modifier,
     segment: Segment,
+    segmentCount: Int,
     isPlaying: Boolean,
     togglePlayback: () -> Unit,
     moveStart: (by: Int) -> Unit,
@@ -78,7 +84,10 @@ fun SegmentToolbar(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("START", color = colors.contentPrimary)
+            Text(
+                text = stringResource(Res.string.start),
+                color = colors.contentPrimary
+            )
             Spacer(Modifier.height(8.dp))
             MoveHandleButtons(
                 containerColor = colors.trimHandleStart,
@@ -93,7 +102,10 @@ fun SegmentToolbar(
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("1 Segment Added", color = colors.contentPrimary)
+            Text(
+                text = pluralStringResource(Res.plurals.n_segments_added, segmentCount, segmentCount),
+                color = colors.contentPrimary
+            )
             Spacer(Modifier.height(8.dp))
             Row(
                 modifier = Modifier
@@ -127,7 +139,10 @@ fun SegmentToolbar(
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("End", color = colors.contentPrimary)
+            Text(
+                text = stringResource(Res.string.end),
+                color = colors.contentPrimary
+            )
             Spacer(Modifier.height(8.dp))
             MoveHandleButtons(
                 containerColor = colors.trimHandleEnd,
@@ -269,6 +284,7 @@ fun SegmentToolbarPreview(
         moveStart = {},
         moveEnd = {},
         colors = colors,
-        enabled = EnableSegmentButton.all
+        enabled = EnableSegmentButton.all,
+        segmentCount = 1
     )
 }

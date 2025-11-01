@@ -1,12 +1,15 @@
 package com.daiatech.waveform.segmentation.zoom
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -45,7 +48,12 @@ fun ZoomButton(
     enableZoomIn: Boolean = true,
     enableZoomOut: Boolean = true
 ) {
-    Row(modifier = modifier.clip(CircleShape), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = modifier
+            .clip(CircleShape)
+            .border(1.dp, Color.White.copy(0.15f), CircleShape),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         ZoomButtonItem(
             modifier = Modifier.weight(1f),
             onClick = onZoomIn,
@@ -53,6 +61,12 @@ fun ZoomButton(
             icon = painterResource(Res.drawable.fizoomin),
             tint = Color.White,
             contentDescription = "Zoom In"
+        )
+        Box(
+            Modifier
+                .width(1.dp)
+                .fillMaxHeight()
+                .background(Color.White.copy(0.15f))
         )
         ZoomButtonItem(
             modifier = Modifier.weight(1f),
