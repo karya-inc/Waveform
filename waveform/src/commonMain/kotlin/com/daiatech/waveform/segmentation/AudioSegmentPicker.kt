@@ -182,7 +182,7 @@ fun AudioSegmentPicker(
                 .pointerInput(Unit) {
                     detectHorizontalDragGestures(
                         onHorizontalDrag = { change, dragAmount ->
-                            if(!processing) {
+                            if (!processing) {
                                 val seekBy = state.pxToDuration(dragAmount)
                                 seek(-seekBy) // left swipe means seek forward and conversely
                                 change.consume()
@@ -350,7 +350,8 @@ fun AudioSegmentPicker(
                 moveStart = { by -> coroutineScope.launch { state.addToStart(by) } },
                 moveEnd = { by -> coroutineScope.launch { state.addToEnd(by) } },
                 colors = colors,
-                enabled = state.enabledButtons(segment)
+                enabled = state.enabledButtons(segment),
+                segmentCount = inactiveSegments.size + 1
             )
         }
     }

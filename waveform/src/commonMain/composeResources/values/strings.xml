@@ -3,4 +3,12 @@
     <string name="play">Play</string>
     <string name="open_close_tag">Open/Close Tag</string>
     <string name="standalone_tag">Standalone Tag</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
+    <string name="speed">Speed</string>
+    <string name="Zoom">Zoom</string>
+    <plurals name="n_segments_added">
+        <item quantity="one">%1$d segment added</item>
+        <item quantity="other">%1$d segments added</item>
+    </plurals>
 </resources>
