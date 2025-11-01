@@ -6,7 +6,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,7 +16,6 @@ import com.daiatech.waveform.app.screens.AudioSegmentPickerScreen
 import com.daiatech.waveform.app.screens.AudioSegmentationScreen
 import com.daiatech.waveform.app.screens.AudioSegmentationScreen2
 import com.daiatech.waveform.app.screens.HomeScreen
-import com.daiatech.waveform.app.ui.theme.WaveFormTheme
 import com.daiatech.waveform.models.Segment
 import kotlinx.serialization.Serializable
 
@@ -33,13 +31,11 @@ data class SegmentPickerScreen(val audioFilePath: String)
 @Serializable
 data class GraphVisualizationScreen(val audioFilePath: String)
 
-
 @Serializable
 object HomeScreen
 
-
 @Composable
-fun App() {
+fun AndroidApp() {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         val navController = rememberNavController()
         val segments = remember { mutableListOf<Segment>() }
@@ -102,7 +98,5 @@ fun App() {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    WaveFormTheme {
-        App()
-    }
+    AndroidApp()
 }

@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -8,6 +9,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.kotlinx.serialization)
 }
 
 kotlin {
@@ -39,6 +41,9 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(files("../libs/amplituda.aar"))
+            implementation(libs.media3.exoplayer)
+            implementation(libs.androidx.material.icons)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,7 +54,11 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose.cmp)
             implementation(libs.androidx.lifecycle.runtimeCompose.cmp)
+            implementation(libs.androidx.navigation.compose.cmp)
 
+            implementation(libs.kotlinx.serialization.json)
+            
+            implementation(libs.karya.ui.cmp)
             implementation(project(":waveform"))
         }
         commonTest.dependencies {
