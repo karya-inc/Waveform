@@ -14,7 +14,5 @@ private fun AudioSegmentPickerPrev1Android() {
 @Preview
 @Composable
 private fun AudioSegmentPickerPreview2Android() {
-    AudioSegmentPickerPreview(
-
-    )
+    AudioSegmentPickerPreview()
 }
