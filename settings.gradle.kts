@@ -20,6 +20,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Waveform"
-include(":app")
 include(":composeApp")
 include(":waveform")
