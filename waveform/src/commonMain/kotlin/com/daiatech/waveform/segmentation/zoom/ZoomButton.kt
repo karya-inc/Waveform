@@ -88,15 +88,15 @@ fun ZoomButtonItem(
 ) {
     Box(
         modifier = modifier
-            .clickable { onClick() }
-            .background(Color.White.copy(alpha = if (enabled) 0.10f else 0.15f))
+            .clickable(enabled) { onClick() }
+            .background(Color.White.copy(alpha = if (enabled) 0.10f else 0.05f))
             .fillMaxHeight(),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             painter = icon,
             contentDescription = contentDescription,
-            tint = tint,
+            tint = tint.copy(alpha = if (enabled) 1f else 0.1f),
             modifier = Modifier.size(18.dp)
         )
     }

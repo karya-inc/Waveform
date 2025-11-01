@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -19,15 +18,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import com.daiatech.karya.ui.buttons.ButtonVariation
+import com.daiatech.karya.ui.buttons.ButtonVariants
+import com.daiatech.karya.ui.buttons.IconButtonVariants
 import com.daiatech.karya.ui.buttons.KButton
 import com.daiatech.karya.ui.buttons.KIconButton
 import com.daiatech.waveform.AUDIO_PLAYER_REFRESH_RATE_MS
@@ -35,11 +35,9 @@ import com.daiatech.waveform.app.model.AudioMeta
 import com.daiatech.waveform.app.utils.LocalAudioManager
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.AudioSegmentPicker
-import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.segmentation.rememberSegmentPickerState
 import com.daiatech.waveform.segmentation.segmentationColors
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 
 @Composable
 fun AudioSegmentationScreen2(
@@ -202,9 +200,9 @@ fun AudioSegmentationScreen2(
                     KButton(
                         modifier = Modifier.fillMaxWidth(),
                         content = "Add Segment",
-                        buttonVariation = ButtonVariation.PrimaryButtonRegular,
+                        variant = ButtonVariants.primaryRegular,
                         onClick = { segmentPickerState.addSegment(progressMs) },
-                        isEnabled = progressMs >= (segments.lastOrNull()?.end ?: 0)
+                        enabled = progressMs >= (segments.lastOrNull()?.end ?: 0)
                     )
                 }
 
@@ -212,19 +210,14 @@ fun AudioSegmentationScreen2(
                     Row(Modifier.fillMaxWidth()) {
                         KIconButton(
                             onClick = { segmentPickerState.removeSegment() },
-                            content = {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = null
-                                )
-                            },
-                            buttonVariation = ButtonVariation.IconSecondaryButtonRegular
+                            painter = rememberVectorPainter(Icons.Default.Delete),
+                            variant = IconButtonVariants.secondaryRegular
                         )
                         Spacer(Modifier.width(8.dp))
                         KButton(
                             modifier = Modifier.weight(1f),
                             content = "Submit Segment",
-                            buttonVariation = ButtonVariation.PrimaryButtonRegular,
+                            variant = ButtonVariants.primaryRegular,
                             onClick = { segment.value?.let { onSubmit(it) } }
                         )
                     }

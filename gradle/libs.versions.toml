@@ -20,7 +20,7 @@ media3 = "1.7.1"
 composeHotReload = "1.0.0-beta08"
 composeMultiplatform = "1.9.0"
 kotlinxCoroutines = "1.10.2"
-karyaUi = "0.0.1"
+karyaUi = "0.0.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
