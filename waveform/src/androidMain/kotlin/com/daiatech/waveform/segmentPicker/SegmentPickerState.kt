@@ -46,7 +46,6 @@ class SegmentPickerState(
     window: Segment,
     segment: Segment,
 ) {
-
     val minimumWindowDuration = 500
     var canvasSize: Size = Size.Zero
     val spikeWidth = spikeWidth.coerceIn(minSpikeWidthDp, maxSpikeWidthDp)
@@ -104,11 +103,15 @@ class SegmentPickerState(
         val zoomedInAmps = window.value.let { window ->
             val viewStartMs = (window.start).coerceAtLeast(0)
             val viewEndMs = (window.end).coerceAtMost(durationMs)
-            val startIdx = (amplitudes.size.toFloat() / durationMs.toFloat()
-                    * viewStartMs.toFloat()).toInt()
+            val startIdx = (
+                amplitudes.size.toFloat() / durationMs.toFloat() *
+                    viewStartMs.toFloat()
+            ).toInt()
                 .coerceIn(0, amplitudes.size)
-            val endIdx = (amplitudes.size.toFloat() / durationMs.toFloat()
-                    * viewEndMs.toFloat()).toInt()
+            val endIdx = (
+                amplitudes.size.toFloat() / durationMs.toFloat() *
+                    viewEndMs.toFloat()
+            ).toInt()
                 .coerceIn(0, amplitudes.size)
             amplitudes.subList(startIdx, endIdx).toDrawableAmplitudes(
                 amplitudeType = amplitudeType,

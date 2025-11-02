@@ -90,7 +90,8 @@ fun AudioMarkerUi(
                 .pointerInput(state.audioFilePath) {
                     detectTapGestures(
                         // onLongPress = state::onLongPress,
-                        onTap = { // FIXME
+                        onTap = {
+                            // FIXME
                             // if (exoPlayer.isPlaying) exoPlayer.stop()
                             // state.onTap(it)
                         }

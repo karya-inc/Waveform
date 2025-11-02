@@ -783,12 +783,14 @@ fun WindowMarker(
     val textMeasurer = rememberTextMeasurer()
     val textStyle = remember { TextStyle(fontSize = 8.sp, color = contentColor) }
     val tm = remember { textMeasurer.measure(text, textStyle) }
-    val tmSizeDp by derivedStateOf {
-        with(density) {
-            DpSize(
-                width = tm.size.width.toDp(),
-                height = tm.size.height.toDp()
-            )
+    val tmSizeDp by remember {
+        derivedStateOf {
+            with(density) {
+                DpSize(
+                    width = tm.size.width.toDp(),
+                    height = tm.size.height.toDp()
+                )
+            }
         }
     }
     Box(

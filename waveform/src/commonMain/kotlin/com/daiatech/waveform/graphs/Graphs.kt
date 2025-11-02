@@ -79,8 +79,10 @@ private fun BarGraph(
 
     Canvas(modifier = modifier) {
         val xStep = size.width / amplitudes.size
-        val w = (size.width - with(density) { barGap.toPx() }
-            .times(amplitudes.size)) / amplitudes.size
+        val w = (
+            size.width - with(density) { barGap.toPx() }
+                .times(amplitudes.size)
+        ) / amplitudes.size
 
         amplitudes.normalized(size.height, 0f, maxAmplitude).forEachIndexed { idx, y ->
             val x = (idx + 0.5f) * xStep

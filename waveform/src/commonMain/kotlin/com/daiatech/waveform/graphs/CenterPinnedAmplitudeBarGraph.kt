@@ -136,14 +136,14 @@ fun CenterPinnedAmplitudeBarGraph(
     var canvasOffset by remember(screenWidthDp) { mutableStateOf(screenWidthDp / 2) }
     LaunchedEffect(progressMs, screenWidthDp, durationMs) {
         val p = (
-                if (start != null && end != null) {
-                    (progressMs - start) / (end - start).toFloat()
-                } else if (durationMs != 0L) {
-                    progressMs.toFloat() / durationMs.toFloat()
-                } else {
-                    0F
-                }
-                ).coerceIn(0F, 1F)
+            if (start != null && end != null) {
+                (progressMs - start) / (end - start).toFloat()
+            } else if (durationMs != 0L) {
+                progressMs.toFloat() / durationMs.toFloat()
+            } else {
+                0F
+            }
+        ).coerceIn(0F, 1F)
 
         canvasOffset = screenWidthDp / 2 - (p * canvasWidth)
     }
@@ -178,7 +178,6 @@ fun CenterPinnedAmplitudeBarGraph(
                         screenWidthDp = with(density) { layoutCoordinates.size.width.toDp() }
                     }
                     .clipToBounds()
-
             ) {
                 Canvas(
                     modifier = Modifier

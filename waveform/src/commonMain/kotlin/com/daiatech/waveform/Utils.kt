@@ -127,7 +127,7 @@ fun toMinSecMs(milliseconds: Long): String {
     return "${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}:${remainingMs.toString().padStart(3, '0')}"
 }
 
-internal infix fun <T> List<T>.times(n: Int) : List<T> {
+internal infix fun <T> List<T>.times(n: Int): List<T> {
     val result = mutableListOf<T>()
     repeat(n) {
         result.addAll(this)

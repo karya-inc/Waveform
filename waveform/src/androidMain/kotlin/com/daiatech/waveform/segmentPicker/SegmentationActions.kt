@@ -90,7 +90,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                           resource = Res.drawable.ic_arrow_right
+                            resource = Res.drawable.ic_arrow_right
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
@@ -147,7 +147,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                           resource = Res.drawable.ic_arrow_left
+                            resource = Res.drawable.ic_arrow_left
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),
@@ -170,7 +170,7 @@ fun SegmentationActions(
                 ) {
                     Icon(
                         painter = painterResource(
-                           resource = Res.drawable.ic_arrow_right
+                            resource = Res.drawable.ic_arrow_right
                         ),
                         contentDescription = null,
                         modifier = Modifier.size(24.dp),

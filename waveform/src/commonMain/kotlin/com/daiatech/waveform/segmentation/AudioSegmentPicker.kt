@@ -139,7 +139,7 @@ fun AudioSegmentPicker(
     LaunchedEffect(progressMs, screenWidth, canvasWidthPx, durationMs) {
         if (screenWidth > 0) {
             canvasOffset = screenWidth / 2 - canvasWidthPx *
-                    ((progressMs.toFloat() safeDiv durationMs.toFloat()).coerceIn(0f, 1f))
+                ((progressMs.toFloat() safeDiv durationMs.toFloat()).coerceIn(0f, 1f))
         }
     }
 

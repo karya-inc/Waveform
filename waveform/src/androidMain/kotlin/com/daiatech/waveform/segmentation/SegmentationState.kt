@@ -49,7 +49,6 @@ class SegmentationState(
     maximumSegmentDuration: Long,
     initialSegments: List<Segment> = listOf(),
 ) {
-
     var canvasSize: Size = Size.Zero
     val spikeWidth = spikeWidth.coerceIn(minSpikeWidthDp, maxSpikeWidthDp)
     val progressBarWidth = spikeWidth.times(2f)
@@ -63,11 +62,11 @@ class SegmentationState(
 
     private val _segments = mutableStateListOf(
         *(
-                initialSegments.filter {
-                    // Remove the segments which are less than minimum duration
-                    it.end - it.start >= minimumSegmentDuration
-                }
-                ).toTypedArray()
+            initialSegments.filter {
+                // Remove the segments which are less than minimum duration
+                it.end - it.start >= minimumSegmentDuration
+            }
+        ).toTypedArray()
     )
     val segments: SnapshotStateList<Segment> = _segments
 

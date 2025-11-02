@@ -215,7 +215,6 @@ internal fun AudioWaveform(
     spikeRadius: Dp,
     spikePadding: Dp,
     amplitudes: List<Int>,
-
     // extra params
     markers: List<Float>,
     drawOnTop: DrawScope.() -> Unit

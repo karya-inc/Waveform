@@ -66,7 +66,6 @@ class SegmentPickerState(
     val minimumSegmentDuration: Long,
     val inactive: List<Segment>
 ) {
-
     private val drawableAmplitudesStore = mutableMapOf<Zoom, List<Float>>()
     private val _processing = mutableStateOf(true)
     private var _zoom = mutableStateOf(Zoom.X1)
@@ -82,13 +81,15 @@ class SegmentPickerState(
         val graphHeight = MIN_GRAPH_HEIGHT.toPx()
 
         WaveformLayout(
-            canvasHeightPx = (triangleSpace * 2 + textHeight + triangleSpace +
+            canvasHeightPx = (
+                triangleSpace * 2 + textHeight + triangleSpace +
                     triangleSpace + graphHeight + triangleSpace +
-                    triangleSpace + textHeight + triangleSpace + triangleSpace),
+                    triangleSpace + textHeight + triangleSpace + triangleSpace
+            ),
             graphHeightPx = graphHeight,
             evenMarkerY = triangleSpace * 2,
             oddMarkerY = triangleSpace * 2 + textHeight + triangleSpace +
-                    triangleSpace + graphHeight + triangleSpace,
+                triangleSpace + graphHeight + triangleSpace,
             markerY = triangleSpace * 2 + textHeight + triangleSpace,
             markerHeight = triangleSpace + graphHeight + triangleSpace,
             graphY = triangleSpace * 2 + textHeight + triangleSpace * 2,
@@ -137,8 +138,10 @@ class SegmentPickerState(
                 if (!drawableAmplitudesStore.containsKey(zoom)) {
                     println("SegmentPickerState:: Processing for $zoom level")
                     val levelStartMs = millisNow
-                    val noOfSpikes = (noOfSpikesInTwoTimestamps(zoom) * durationMs
-                            / DURATION_MS_BETWEEN_TIMESTAMP).toInt()
+                    val noOfSpikes = (
+                        noOfSpikesInTwoTimestamps(zoom) * durationMs /
+                            DURATION_MS_BETWEEN_TIMESTAMP
+                    ).toInt()
                     val chunkSize = 5000
                     val drawableAmps = if (noOfSpikes > chunkSize) {
                         processAmplitudesInChunks(noOfSpikes, chunkSize)
@@ -339,8 +342,10 @@ class SegmentPickerState(
          * = (durationBetweenTwoTimestamps * px / pixelsBetweenTwoTimestamps)
          * = ((durationBetweenTwoTimestamps * px) / (noOfSpikesInTwoTimestamps * noOfPxInOneSpike))
          */
-        return ((px * DURATION_MS_BETWEEN_TIMESTAMP) /
-                (noOfSpikesInTwoTimestamps(zoom.value) * layout.spikeTotalWidthPx)).toLong()
+        return (
+            (px * DURATION_MS_BETWEEN_TIMESTAMP) /
+                (noOfSpikesInTwoTimestamps(zoom.value) * layout.spikeTotalWidthPx)
+        ).toLong()
     }
 
     @Stable

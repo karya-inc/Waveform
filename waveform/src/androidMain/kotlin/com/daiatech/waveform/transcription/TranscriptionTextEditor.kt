@@ -284,8 +284,8 @@ fun TranscriptionTextEditor(
 
                                 // Insert the clean tag wrapped in []
                                 newText = currentText.substring(0, cursorPosition) +
-                                        formattedTag +
-                                        currentText.substring(cursorPosition)
+                                    formattedTag +
+                                    currentText.substring(cursorPosition)
 
                                 newCursorPosition =
                                     cursorPosition + cleanTag.length + 2 // +2 for []
@@ -293,8 +293,8 @@ fun TranscriptionTextEditor(
 
                             TagType.OPEN_CLOSE -> {
                                 newText = currentText.substring(0, cursorPosition) +
-                                        "<$selectedTag></$selectedTag>" +
-                                        currentText.substring(cursorPosition)
+                                    "<$selectedTag></$selectedTag>" +
+                                    currentText.substring(cursorPosition)
 
                                 newCursorPosition =
                                     cursorPosition + selectedTag.length + 2 // +2 for <>
