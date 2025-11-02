@@ -78,7 +78,7 @@ compose.resources {
 }
 
 group = "io.github.karya-inc"
-version = "0.0.4"
+version = "0.0.5"
 
 mavenPublishing {
     val artifactId = "waveform"
