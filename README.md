@@ -2,6 +2,8 @@
 
 A modern, Jetpack Compose-based Android library to visualize audio waveforms, playback progress, and interactively select or segment audio clips with ease.
 
+## ⚠️ Currently under migration to CMP
+
 
 ## ✨ Features
 
