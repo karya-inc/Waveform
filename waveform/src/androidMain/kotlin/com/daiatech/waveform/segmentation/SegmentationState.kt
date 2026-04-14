@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.MIN_SPIKE_HEIGHT
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.chunkToSize
 import com.daiatech.waveform.fillToSize
 import com.daiatech.waveform.maxSpikePaddingDp
@@ -48,6 +49,7 @@ class SegmentationState(
     minimumSegmentDuration: Long,
     maximumSegmentDuration: Long,
     initialSegments: List<Segment> = listOf(),
+    initialSpeed: PlaybackSpeed = PlaybackSpeed.X1_00,
 ) {
     var canvasSize: Size = Size.Zero
     val spikeWidth = spikeWidth.coerceIn(minSpikeWidthDp, maxSpikeWidthDp)
@@ -59,6 +61,13 @@ class SegmentationState(
         this.spikeWidth + spikePadding.coerceIn(minSpikePaddingDp, maxSpikePaddingDp)
 
     /***************************  UI States   *****************************/
+
+    private val _speed = mutableStateOf(initialSpeed)
+    val speed: State<PlaybackSpeed> = _speed
+
+    fun updateSpeed(speed: PlaybackSpeed) {
+        _speed.value = speed
+    }
 
     private val _segments = mutableStateListOf(
         *(
@@ -392,7 +401,8 @@ fun rememberAudioSegmentationState(
     spikePadding: Dp = 1.dp,
     minimumSegmentDuration: Long = 1000,
     maximumSegmentDuration: Long = 15000,
-    initialSegments: List<Segment> = listOf()
+    initialSegments: List<Segment> = listOf(),
+    initialSpeed: PlaybackSpeed = PlaybackSpeed.X1_00,
 ): SegmentationState {
     return remember(key) {
         SegmentationState(
@@ -409,7 +419,8 @@ fun rememberAudioSegmentationState(
             spikePadding = spikePadding,
             minimumSegmentDuration = minimumSegmentDuration,
             maximumSegmentDuration = maximumSegmentDuration,
-            initialSegments = initialSegments
+            initialSegments = initialSegments,
+            initialSpeed = initialSpeed,
         )
     }
 }

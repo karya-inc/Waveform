@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -76,6 +77,8 @@ import com.daiatech.waveform.marker_2
 import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
+import com.daiatech.waveform.segmentation.speed.SpeedButton
 import com.daiatech.waveform.toSecsAndMs
 import com.daiatech.waveform.touchTargetSize
 import kotlinx.coroutines.CoroutineScope
@@ -139,6 +142,11 @@ fun AudioSegmentationUi(
     var isPaused by remember(state.audioFilePath) { mutableStateOf(false) }
     var topPlayerProgress by remember(state.audioFilePath) { mutableLongStateOf(0L) }
     var segmentPlaybackProgress by remember(state.audioFilePath) { mutableLongStateOf(0L) }
+    val speed by state.speed
+
+    LaunchedEffect(speed) {
+        exoPlayer.setPlaybackSpeed(speed.float)
+    }
 
     DisposableEffect(key1 = state.audioFilePath) {
         val handler = Handler(Looper.getMainLooper())
@@ -595,6 +603,15 @@ fun AudioSegmentationUi(
                             text = progress,
                             color = colors.buttonColor,
                             style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        SpeedButton(
+                            availableSpeeds = PlaybackSpeed.entries,
+                            selectedSpeed = speed,
+                            onSpeedUpdate = { state.updateSpeed(it) },
+                            containerColor = Color.Black.copy(0.1F),
+                            contentColor = colors.buttonColor,
+                            modifier = Modifier.width(80.dp)
                         )
                     }
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
