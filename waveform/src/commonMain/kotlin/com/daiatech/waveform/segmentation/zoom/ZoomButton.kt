@@ -27,6 +27,7 @@ import com.daiatech.waveform.Res
 import com.daiatech.waveform.fizoomin
 import com.daiatech.waveform.fizoomout
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Dual-button control for zoom in/out
@@ -121,6 +122,7 @@ fun ZoomButtonItem(
  *
  * Demonstrates button with zoom in enabled and zoom out disabled.
  */
+@Preview
 @Composable
 fun ZoomButtonPreview() {
     var zoomLevel by remember { mutableStateOf(1f) }

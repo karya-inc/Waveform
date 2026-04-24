@@ -64,6 +64,7 @@ import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Audio waveform segment picker with playback controls
@@ -426,6 +427,7 @@ fun DrawScope.drawSegmentWindow(
  * @param colors color scheme for UI elements
  */
 @Composable
+@Preview
 fun AudioSegmentPickerPreview(
     colors: SegmentationColors = segmentationColors()
 ) {

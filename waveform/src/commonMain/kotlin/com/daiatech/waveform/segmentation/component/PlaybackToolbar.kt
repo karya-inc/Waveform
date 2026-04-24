@@ -30,6 +30,7 @@ import com.daiatech.waveform.segmentation.segmentationColors
 import com.daiatech.waveform.segmentation.speed.SpeedButton
 import com.daiatech.waveform.segmentation.zoom.ZoomButton
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Toolbar for audio playback controls
@@ -124,6 +125,7 @@ fun PlaybackToolbar(
  *
  * Demonstrates toolbar with mock playback state at 30s of 60s duration.
  */
+@Preview
 @Composable
 fun PlaybackToolbarPreview() {
     PlaybackToolbar(

@@ -51,6 +51,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * Toolbar for selected segment controls
@@ -272,6 +273,7 @@ fun Modifier.changeSegmentPosition(
  *
  * @param colors color scheme for UI elements
  */
+@Preview
 @Composable
 fun SegmentToolbarPreview(
     colors: SegmentationColors = segmentationColors()
