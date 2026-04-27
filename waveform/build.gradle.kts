@@ -50,13 +50,15 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.ui)
-                implementation(compose.material3)
-                implementation(compose.materialIconsExtended)
-                implementation(compose.components.resources)
-                implementation(compose.components.uiToolingPreview)
+                // Compose
+                implementation(libs.jetbrains.compose.runtime)
+                implementation(libs.jetbrains.compose.foundation)
+                implementation(libs.jetbrains.compose.ui)
+                implementation(libs.jetbrains.compose.components.resources)
+                implementation(libs.jetbrains.compose.ui.tooling.preview)
+                implementation(libs.jetbrains.compose.material3)
+                //implementation(compose.materialIconsExtended)
+
                 implementation(libs.karya.ui.cmp)
             }
         }
@@ -69,6 +71,10 @@ kotlin {
             }
         }
     }
+}
+
+dependencies {
+    androidRuntimeClasspath(libs.jetbrains.compose.ui.tooling)
 }
 
 compose.resources {

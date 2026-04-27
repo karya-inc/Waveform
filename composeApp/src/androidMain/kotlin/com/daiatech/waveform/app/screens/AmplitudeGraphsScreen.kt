@@ -13,9 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
+import com.daiatech.waveform.icons.Play
+import com.daiatech.waveform.icons.Pause
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -138,7 +137,7 @@ fun AmplitudeGraphsScreen(audioFilePath: String) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Image(
-                    painter = rememberVectorPainter(if(isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow),
+                    painter = rememberVectorPainter(if(isPlaying) Pause else Play),
                     contentDescription = "play",
                     modifier = Modifier
                         .size(48.dp)

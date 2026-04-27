@@ -1,0 +1,118 @@
+package com.daiatech.waveform.player
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.daiatech.waveform.Res
+import com.daiatech.waveform.ic_pause
+import com.daiatech.waveform.ic_play_arrow
+import com.daiatech.waveform.millisecondsToMmSs
+import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
+import com.daiatech.waveform.segmentation.speed.SpeedButton
+import com.daiatech.waveform.segmentation.zoom.Zoom
+import com.daiatech.waveform.segmentation.zoom.ZoomButton
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
+
+@Composable
+fun PlayerToolbar(
+    state: AudioPlayerState,
+    progressMs: Long,
+    isPlaying: Boolean,
+    togglePlayback: () -> Unit,
+    speed: PlaybackSpeed,
+    updateSpeed: (PlaybackSpeed) -> Unit,
+    colors: AudioPlayerColors = audioPlayerColors(),
+    speedLabel: String = "Speed",
+    zoomLabel: String = "Zoom",
+    modifier: Modifier = Modifier,
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val durationMs = remember { state.durationMs }
+    val zoom by state.zoom
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(colors.background)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(speedLabel, color = colors.contentPrimary)
+            Spacer(Modifier.height(8.dp))
+            SpeedButton(
+                availableSpeeds = PlaybackSpeed.entries,
+                selectedSpeed = speed,
+                onSpeedUpdate = updateSpeed,
+                containerColor = Color.White.copy(0.1f),
+                contentColor = colors.contentPrimary,
+                modifier = Modifier
+                    .height(48.dp)
+                    .fillMaxWidth(),
+            )
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .size(48.dp)
+                    .background(colors.waveformColor)
+                    .clickable { togglePlayback() },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow),
+                    contentDescription = null,
+                    tint = colors.background,
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = "${millisecondsToMmSs(progressMs)}/${millisecondsToMmSs(durationMs)}",
+                color = colors.waveformColor,
+            )
+        }
+
+        Column(
+            modifier = Modifier.weight(1f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(zoomLabel, color = colors.waveformColor)
+            Spacer(Modifier.height(8.dp))
+            ZoomButton(
+                modifier = Modifier
+                    .height(48.dp)
+                    .fillMaxWidth(),
+                onZoomIn = { coroutineScope.launch { state.zoomIn() } },
+                onZoomOut = { coroutineScope.launch { state.zoomOut() } },
+                enableZoomIn = zoom != Zoom.max,
+                enableZoomOut = zoom != Zoom.min,
+            )
+        }
+    }
+}

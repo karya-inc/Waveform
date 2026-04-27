@@ -36,19 +36,19 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(files("../libs/amplituda.aar"))
             implementation(libs.media3.exoplayer)
-            implementation(libs.androidx.material.icons)
         }
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
+            // Compose
+            implementation(libs.jetbrains.compose.runtime)
+            implementation(libs.jetbrains.compose.foundation)
+            implementation(libs.jetbrains.compose.ui)
+            implementation(libs.jetbrains.compose.components.resources)
+            implementation(libs.jetbrains.compose.ui.tooling.preview)
+            implementation(libs.jetbrains.compose.material3)
+
             implementation(libs.androidx.lifecycle.viewmodelCompose.cmp)
             implementation(libs.androidx.lifecycle.runtimeCompose.cmp)
             implementation(libs.androidx.navigation.compose.cmp)

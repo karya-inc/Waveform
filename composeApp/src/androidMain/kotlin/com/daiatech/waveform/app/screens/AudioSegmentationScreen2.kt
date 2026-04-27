@@ -9,8 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import com.daiatech.waveform.icons.Delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -210,7 +209,7 @@ fun AudioSegmentationScreen2(
                     Row(Modifier.fillMaxWidth()) {
                         KIconButton(
                             onClick = { segmentPickerState.removeSegment() },
-                            painter = rememberVectorPainter(Icons.Default.Delete),
+                            painter = rememberVectorPainter(Delete),
                             variant = IconButtonVariants.secondaryRegular
                         )
                         Spacer(Modifier.width(8.dp))

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.DrawStyle
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
@@ -39,7 +40,6 @@ import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.toDrawableAmplitudes
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
  * A dynamic, real-time graph composable that visualizes audio amplitudes over time.

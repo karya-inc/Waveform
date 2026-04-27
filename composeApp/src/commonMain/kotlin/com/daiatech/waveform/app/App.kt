@@ -16,7 +16,7 @@ import androidx.compose.ui.Modifier
 import com.daiatech.waveform.app.Res
 import com.daiatech.waveform.app.compose_multiplatform
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 @Preview
