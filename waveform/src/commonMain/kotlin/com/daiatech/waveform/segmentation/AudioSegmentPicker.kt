@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,7 +62,8 @@ import com.daiatech.waveform.times
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
+import com.daiatech.waveform.icons.Delete
 
 /**
  * Audio waveform segment picker with playback controls
@@ -528,7 +527,7 @@ fun AudioSegmentPickerPreview(
                     Row(Modifier.fillMaxWidth()) {
                         KIconButton(
                             onClick = { state.removeSegment() },
-                            painter = rememberVectorPainter(Icons.Default.Delete),
+                            painter = rememberVectorPainter(Delete),
                             variant = IconButtonVariants.secondaryRegular
                         )
                         Spacer(Modifier.width(8.dp))

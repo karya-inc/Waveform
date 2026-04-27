@@ -27,7 +27,7 @@ import com.daiatech.waveform.Res
 import com.daiatech.waveform.fizoomin
 import com.daiatech.waveform.fizoomout
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 /**
  * Dual-button control for zoom in/out

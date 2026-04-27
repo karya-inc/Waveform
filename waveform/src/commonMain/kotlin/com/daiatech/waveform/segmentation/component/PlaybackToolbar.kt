@@ -30,7 +30,7 @@ import com.daiatech.waveform.segmentation.segmentationColors
 import com.daiatech.waveform.segmentation.speed.SpeedButton
 import com.daiatech.waveform.segmentation.zoom.ZoomButton
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 /**
  * Toolbar for audio playback controls

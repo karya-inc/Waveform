@@ -54,7 +54,7 @@ import com.daiatech.waveform.models.WaveformAlignment
 import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.models.waveformColors
 import com.daiatech.waveform.toDrawableAmplitudes
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 
 const val timeIntervalMs = 500
 const val spikeIntervalMs = 1000 / 20

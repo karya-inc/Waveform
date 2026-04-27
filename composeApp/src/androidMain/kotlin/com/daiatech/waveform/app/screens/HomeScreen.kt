@@ -29,7 +29,8 @@ fun HomeScreen(
     navigateToSegmentation: (String) -> Unit,
     navigateToSegmentation2: (String) -> Unit,
     navigateToSegmentPicker: (String) -> Unit,
-    navigateToAmplitudeGraph: (String) -> Unit
+    navigateToAmplitudeGraph: (String) -> Unit,
+    navigateToAudioPlayer: (String) -> Unit,
 ) {
     val context = LocalContext.current
     var files by remember { mutableStateOf<List<String>>(listOf()) }
@@ -82,6 +83,9 @@ fun HomeScreen(
                     }
                     Button(onClick = { navigateToAmplitudeGraph(files[selected]) }) {
                         Text("Amplitude Visualization")
+                    }
+                    Button(onClick = { navigateToAudioPlayer(files[selected]) }) {
+                        Text("Waveform Audio Player")
                     }
                 }
             }

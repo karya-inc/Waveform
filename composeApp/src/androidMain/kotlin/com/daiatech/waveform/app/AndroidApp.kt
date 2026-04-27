@@ -16,6 +16,7 @@ import com.daiatech.waveform.app.screens.AudioSegmentPickerScreen
 import com.daiatech.waveform.app.screens.AudioSegmentationScreen
 import com.daiatech.waveform.app.screens.AudioSegmentationScreen2
 import com.daiatech.waveform.app.screens.HomeScreen
+import com.daiatech.waveform.app.screens.WaveformAudioPlayerScreen
 import com.daiatech.waveform.models.Segment
 import kotlinx.serialization.Serializable
 
@@ -30,6 +31,9 @@ data class SegmentPickerScreen(val audioFilePath: String)
 
 @Serializable
 data class GraphVisualizationScreen(val audioFilePath: String)
+
+@Serializable
+data class AudioPlayerScreen(val audioFilePath: String)
 
 @Serializable
 object HomeScreen
@@ -58,8 +62,10 @@ fun AndroidApp() {
                     },
                     navigateToAmplitudeGraph = { path ->
                         navController.navigate(GraphVisualizationScreen(path))
-
-                    }
+                    },
+                    navigateToAudioPlayer = { path ->
+                        navController.navigate(AudioPlayerScreen(path))
+                    },
                 )
             }
 
@@ -90,6 +96,11 @@ fun AndroidApp() {
             composable<GraphVisualizationScreen> { backStackEntry ->
                 val route = backStackEntry.toRoute<SegmentPickerScreen>()
                 AmplitudeGraphsScreen(audioFilePath = route.audioFilePath)
+            }
+
+            composable<AudioPlayerScreen> { backStackEntry ->
+                val route = backStackEntry.toRoute<AudioPlayerScreen>()
+                WaveformAudioPlayerScreen(audioFilePath = route.audioFilePath)
             }
         }
     }
