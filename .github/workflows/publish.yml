@@ -46,22 +46,22 @@ jobs:
 
             - name: Decode Keystore
               run: |
-                  echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/composeApp/release.keystore
+                  echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > ${{ github.workspace }}/androidApp/release.keystore
 
             - name: Grant Execute Permission to Gradlew
               run: chmod +x gradlew
 
             - name: Build Signed APK
               run: |
-                  ./gradlew :composeApp:assembleRelease \
-                  -Pandroid.injected.signing.store.file=${{ github.workspace }}/composeApp/release.keystore \
+                  ./gradlew :androidApp:assembleRelease \
+                  -Pandroid.injected.signing.store.file=${{ github.workspace }}/androidApp/release.keystore \
                   -Pandroid.injected.signing.store.password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
                   -Pandroid.injected.signing.key.alias=${{ secrets.ANDROID_KEY_ALIAS }} \
                   -Pandroid.injected.signing.key.password=${{ secrets.ANDROID_KEY_PASSWORD }}
 
             - name: Find APK
               run: |
-                  APK_PATH=$(find "${{ github.workspace }}/composeApp/build/outputs/apk/release" -name "*.apk" | head -n 1)
+                  APK_PATH=$(find "${{ github.workspace }}/androidApp/build/outputs/apk/release" -name "*.apk" | head -n 1)
                   if [ -z "$APK_PATH" ]; then
                       echo "❌ APK not found! Release failed."
                       exit 1
