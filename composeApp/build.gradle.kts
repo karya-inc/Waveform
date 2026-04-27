@@ -1,11 +1,9 @@
-import org.gradle.kotlin.dsl.implementation
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.androidKotlinMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.composeHotReload)
@@ -13,12 +11,11 @@ plugins {
 }
 
 kotlin {
-    androidTarget {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
+    android {
+        namespace = "com.daiatech.waveform.app"
+        compileSdk { version = release(36) }
     }
-    
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -71,35 +68,8 @@ kotlin {
     }
 }
 
-android {
-    namespace = "com.daiatech.waveform.app"
-    compileSdk = libs.versions.android.compileSdk.get().toInt()
-
-    defaultConfig {
-        applicationId = "com.daiatech.waveform.app"
-        minSdk = libs.versions.android.minSdk.get().toInt()
-        targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
-    buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-        }
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-
 dependencies {
-    debugImplementation(compose.uiTooling)
+    androidRuntimeClasspath(libs.jetbrains.compose.ui.tooling)
 }
 
 compose.desktop {
@@ -112,4 +82,11 @@ compose.desktop {
             packageVersion = "1.0.0"
         }
     }
+}
+
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.daiatech.waveform.app"
+    generateResClass = auto
 }
