@@ -36,7 +36,6 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
             implementation(files("../libs/amplituda.aar"))
             implementation(libs.media3.exoplayer)
         }
