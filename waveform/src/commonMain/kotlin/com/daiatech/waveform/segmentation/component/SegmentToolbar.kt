@@ -25,13 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.Res
 import com.daiatech.waveform.end
-import com.daiatech.waveform.mdarrowbackwardios
-import com.daiatech.waveform.mdarrowforwardios
+import com.daiatech.waveform.icons.Mdarrowbackwardios
+import com.daiatech.waveform.icons.Mdarrowforwardios
+import com.daiatech.waveform.icons.Pause
+import com.daiatech.waveform.icons.Play
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.n_segments_added
 import com.daiatech.waveform.segmentation.EnableSegmentButton
@@ -45,12 +48,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import com.daiatech.waveform.icons.Play
-import com.daiatech.waveform.icons.Pause
 
 
 /**
@@ -194,7 +193,7 @@ private fun MoveHandleButtons(
                 .padding(8.dp)
         ) {
             Icon(
-                painter = painterResource(Res.drawable.mdarrowbackwardios),
+                imageVector = Mdarrowbackwardios,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = contentColor
@@ -214,7 +213,7 @@ private fun MoveHandleButtons(
                 .padding(8.dp)
         ) {
             Icon(
-                painter = painterResource(Res.drawable.mdarrowforwardios),
+                imageVector = Mdarrowforwardios,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
                 tint = contentColor

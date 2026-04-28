@@ -84,7 +84,7 @@ class AudioMarkerState(
         spikesMultiplier: Float
     ) = withContext(Dispatchers.Default) {
         val maxHeight = canvasSize.height.coerceAtLeast(MIN_SPIKE_HEIGHT)
-        val zoomedInAmps = activeSegment.value?.let { segment ->
+        val zoomedInAmps = activeSegment.value.let { segment ->
             val viewStartMs = (segment.start).coerceAtLeast(0)
             val viewEndMs = (segment.end).coerceAtMost(durationMs)
             val startIdx =

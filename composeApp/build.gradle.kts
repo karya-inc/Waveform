@@ -12,7 +12,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.daiatech.waveform.app"
+        namespace = "com.daiatech.waveform.shared"
         compileSdk { version = release(36) }
     }
 

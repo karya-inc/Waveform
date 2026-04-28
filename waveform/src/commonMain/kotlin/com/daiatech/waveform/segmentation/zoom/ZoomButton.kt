@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -22,12 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.dp
-import com.daiatech.waveform.Res
-import com.daiatech.waveform.fizoomin
-import com.daiatech.waveform.fizoomout
-import org.jetbrains.compose.resources.painterResource
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.daiatech.waveform.icons.Fizoomin
+import com.daiatech.waveform.icons.Fizoomout
 
 /**
  * Dual-button control for zoom in/out
@@ -59,7 +57,7 @@ fun ZoomButton(
             modifier = Modifier.weight(1f),
             onClick = onZoomIn,
             enabled = enableZoomIn,
-            icon = painterResource(Res.drawable.fizoomin),
+            icon = rememberVectorPainter(Fizoomin),
             tint = Color.White,
             contentDescription = "Zoom In"
         )
@@ -73,7 +71,7 @@ fun ZoomButton(
             modifier = Modifier.weight(1f),
             onClick = onZoomOut,
             enabled = enableZoomOut,
-            icon = painterResource(Res.drawable.fizoomout),
+            icon = rememberVectorPainter(Fizoomout),
             tint = Color.White,
             contentDescription = "Zoom out"
         )

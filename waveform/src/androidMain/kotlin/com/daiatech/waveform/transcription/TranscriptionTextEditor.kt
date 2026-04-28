@@ -41,8 +41,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.daiatech.waveform.Res
-import com.daiatech.waveform.ic_tag
-import com.daiatech.waveform.ic_tag_filled
+import com.daiatech.waveform.icons.Tag
+import com.daiatech.waveform.icons.TagFilled
 import com.daiatech.waveform.open_close_tag
 import com.daiatech.waveform.standalone_tag
 import org.jetbrains.compose.resources.painterResource
@@ -184,13 +184,7 @@ fun TranscriptionTextEditor(
                                 }
                             }) {
                                 Icon(
-                                    painter = if (isColumnVisible) {
-                                        painterResource(resource = Res.drawable.ic_tag_filled)
-                                    } else {
-                                        painterResource(
-                                            resource = Res.drawable.ic_tag
-                                        )
-                                    },
+                                    imageVector = if (isColumnVisible) TagFilled else Tag,
                                     contentDescription = "Tags",
                                     tint = Color(0xFF6A6B6B)
                                 )

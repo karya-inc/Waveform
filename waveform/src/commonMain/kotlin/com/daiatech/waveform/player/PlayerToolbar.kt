@@ -23,9 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.daiatech.waveform.Res
-import com.daiatech.waveform.ic_pause
-import com.daiatech.waveform.ic_play_arrow
+import com.daiatech.waveform.icons.Pause
+import com.daiatech.waveform.icons.Play
 import com.daiatech.waveform.millisecondsToMmSs
 import com.daiatech.waveform.segmentation.speed.PlaybackSpeed
 import com.daiatech.waveform.segmentation.speed.SpeedButton
@@ -86,7 +85,7 @@ fun PlayerToolbar(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    painter = painterResource(if (isPlaying) Res.drawable.ic_pause else Res.drawable.ic_play_arrow),
+                    imageVector = if (isPlaying) Pause else Play,
                     contentDescription = null,
                     tint = colors.background,
                 )

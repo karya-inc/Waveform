@@ -12,21 +12,10 @@ plugins {
 }
 
 kotlin {
-    androidLibrary {
+    android {
         namespace = "com.daiatech.waveform"
-        compileSdk = 36
+        compileSdk { version = release(36) }
         minSdk = 21
-
-        withHostTestBuilder {
-        }
-
-        withDeviceTestBuilder {
-            sourceSetTreeName = "test"
-        }.configure {
-            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        }
-        experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
-
     }
 
     jvm()
@@ -57,7 +46,6 @@ kotlin {
                 implementation(libs.jetbrains.compose.components.resources)
                 implementation(libs.jetbrains.compose.ui.tooling.preview)
                 implementation(libs.jetbrains.compose.material3)
-                //implementation(compose.materialIconsExtended)
 
                 implementation(libs.karya.ui.cmp)
             }

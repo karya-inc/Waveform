@@ -1,0 +1,69 @@
+package com.daiatech.waveform.icons
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.unit.dp
+
+val Tag: ImageVector
+    get() {
+        if (_Tag != null) {
+            return _Tag!!
+        }
+        _Tag = ImageVector.Builder(
+            name = "Tag",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 960f,
+            viewportHeight = 960f
+        ).apply {
+            path(fill = SolidColor(Color(0xFFE8EAED))) {
+                moveTo(856f, 570f)
+                lineTo(570f, 856f)
+                quadToRelative(-12f, 12f, -27f, 18f)
+                reflectiveQuadToRelative(-30f, 6f)
+                quadToRelative(-15f, 0f, -30f, -6f)
+                reflectiveQuadToRelative(-27f, -18f)
+                lineTo(103f, 503f)
+                quadToRelative(-11f, -11f, -17f, -25.5f)
+                reflectiveQuadTo(80f, 447f)
+                verticalLineToRelative(-287f)
+                quadToRelative(0f, -33f, 23.5f, -56.5f)
+                reflectiveQuadTo(160f, 80f)
+                horizontalLineToRelative(287f)
+                quadToRelative(16f, 0f, 31f, 6.5f)
+                reflectiveQuadToRelative(26f, 17.5f)
+                lineToRelative(352f, 353f)
+                quadToRelative(12f, 12f, 17.5f, 27f)
+                reflectiveQuadToRelative(5.5f, 30f)
+                quadToRelative(0f, 15f, -5.5f, 29.5f)
+                reflectiveQuadTo(856f, 570f)
+                close()
+                moveTo(513f, 800f)
+                lineToRelative(286f, -286f)
+                lineToRelative(-353f, -354f)
+                lineTo(160f, 160f)
+                verticalLineToRelative(286f)
+                lineToRelative(353f, 354f)
+                close()
+                moveTo(260f, 320f)
+                quadToRelative(25f, 0f, 42.5f, -17.5f)
+                reflectiveQuadTo(320f, 260f)
+                quadToRelative(0f, -25f, -17.5f, -42.5f)
+                reflectiveQuadTo(260f, 200f)
+                quadToRelative(-25f, 0f, -42.5f, 17.5f)
+                reflectiveQuadTo(200f, 260f)
+                quadToRelative(0f, 25f, 17.5f, 42.5f)
+                reflectiveQuadTo(260f, 320f)
+                close()
+                moveTo(480f, 480f)
+                close()
+            }
+        }.build()
+
+        return _Tag!!
+    }
+
+@Suppress("ObjectPropertyName")
+private var _Tag: ImageVector? = null

@@ -142,7 +142,7 @@ fun AudioMarkerUi(
             }
 
             // Highlighted Segment boundary
-            state.activeSegment.value?.let { segment ->
+            state.activeSegment.value.let { segment ->
                 val xStart = size.width / state.durationMs.toFloat() * segment.start
                 val xEnd = size.width / state.durationMs.toFloat() * segment.end
 
