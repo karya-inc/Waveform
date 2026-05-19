@@ -7,16 +7,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.daiatech.waveform.MIN_GRAPH_HEIGHT
 import com.daiatech.waveform.MIN_SPIKE_HEIGHT
 import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.segmentation.DURATION_MS_BETWEEN_TIMESTAMP
 import com.daiatech.waveform.segmentation.WaveformLayout
-import com.daiatech.waveform.segmentation.markerFontSize
 import com.daiatech.waveform.segmentation.millisNow
 import com.daiatech.waveform.segmentation.noOfSpikesInTwoTimestamps
-import com.daiatech.waveform.segmentation.verticalItemSpacing
 import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
 import kotlinx.coroutines.Deferred
@@ -33,6 +33,8 @@ class AudioPlayerState(
     val amplitudes: List<Int>,
     val durationMs: Long,
     graphHeight: Dp = MIN_GRAPH_HEIGHT,
+    verticalItemSpacing: Dp = 8.dp,
+    markerFontSize: TextUnit = 12.sp,
 ) {
     private val drawableAmplitudesStore = mutableMapOf<Zoom, List<Float>>()
     private val _processing = mutableStateOf(true)
@@ -182,9 +184,9 @@ class AudioPlayerState(
 fun rememberAudioPlayerState(
     amplitudes: List<Int>,
     durationMs: Long,
-    graphHeight: Dp = 48.dp,
 ): AudioPlayerState {
     val density = LocalDensity.current
+    val dimensions = LocalAudioPlayerDimensions.current
     return remember {
         AudioPlayerState(
             density = density,
@@ -193,7 +195,9 @@ fun rememberAudioPlayerState(
             spikePadding = 2.dp,
             amplitudes = amplitudes,
             durationMs = durationMs,
-            graphHeight = graphHeight,
+            graphHeight = dimensions.graphHeight,
+            verticalItemSpacing = dimensions.verticalItemSpacing,
+            markerFontSize = dimensions.markerFontSize,
         )
     }
 }

@@ -32,9 +32,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import com.daiatech.waveform.common.WaveformPulse
 import com.daiatech.waveform.safeDiv
 import com.daiatech.waveform.segmentation.DURATION_MS_BETWEEN_TIMESTAMP
-import com.daiatech.waveform.segmentation.markerFontSize
 import com.daiatech.waveform.segmentation.noOfSpikesInTwoTimestamps
-import com.daiatech.waveform.segmentation.verticalItemSpacing
 import com.daiatech.waveform.times
 
 @Composable
@@ -47,6 +45,7 @@ fun PlayerWaveform(
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
+    val dimensions = LocalAudioPlayerDimensions.current
     LaunchedEffect(Unit) { state.calculateDrawableAmplitudes() }
 
     val layout = remember { state.layout }
@@ -62,8 +61,8 @@ fun PlayerWaveform(
 
     var screenWidth by remember { mutableIntStateOf(0) }
 
-    val markersTextStyle = remember {
-        TextStyle(fontSize = markerFontSize, color = colors.markerColor)
+    val markersTextStyle = remember(dimensions.markerFontSize, colors.markerColor) {
+        TextStyle(fontSize = dimensions.markerFontSize, color = colors.markerColor)
     }
 
     val noOfSpikes = remember(zoom, durationMs) {
@@ -84,13 +83,15 @@ fun PlayerWaveform(
 
     val canvasHeightDp = remember { with(density) { layout.canvasHeightPx.toDp() } }
 
-    val centerMarkerPath = remember(screenWidth, graphHeightPx, spikeWidthPx) {
+    val vSpacingDp = dimensions.verticalItemSpacing
+    val markerFontSizeSp = dimensions.markerFontSize
+    val centerMarkerPath = remember(screenWidth, graphHeightPx, spikeWidthPx, vSpacingDp, markerFontSizeSp) {
         if (screenWidth == 0) return@remember Path()
         with(density) {
             val centerX = screenWidth / 2
-            val vSpacing = verticalItemSpacing.toPx()
+            val vSpacing = vSpacingDp.toPx()
             val spikeW = spikeWidthPx / 2
-            val totalHeight = vSpacing * 7 + graphHeightPx + 2 * markerFontSize.toPx()
+            val totalHeight = vSpacing * 7 + graphHeightPx + 2 * markerFontSizeSp.toPx()
 
             Path().apply {
                 moveTo(centerX - vSpacing, 0f)
