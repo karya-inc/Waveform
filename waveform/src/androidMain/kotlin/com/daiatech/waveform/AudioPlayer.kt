@@ -27,8 +27,6 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.daiatech.waveform.icons.Pause
 import com.daiatech.waveform.icons.Play
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun RowScope.AudioPlayer(
@@ -121,7 +119,7 @@ private fun RowScope.AudioPlayer(
     val progress = if (durationMS == 0L) 0f else currentPosition.toFloat().div(durationMS)
     Icon(
         imageVector =  if (isPlaying) Pause else Play,
-        contentDescription = stringResource(resource = Res.string.play),
+        contentDescription = "Play",
         modifier = Modifier
             .size(48.dp)
             .clickable { if (isPlaying) onPause() else onPlay() },

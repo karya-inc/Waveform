@@ -29,18 +29,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.daiatech.waveform.ON_LONG_TAP_ADJUSTMENT_MS
 import com.daiatech.waveform.ON_TAP_ADJUSTMENT_MS
-import com.daiatech.waveform.Res
-import com.daiatech.waveform.end
 import com.daiatech.waveform.icons.Mdarrowbackwardios
 import com.daiatech.waveform.icons.Mdarrowforwardios
 import com.daiatech.waveform.icons.Pause
 import com.daiatech.waveform.icons.Play
 import com.daiatech.waveform.models.Segment
-import com.daiatech.waveform.n_segments_added
 import com.daiatech.waveform.segmentation.EnableSegmentButton
 import com.daiatech.waveform.segmentation.SegmentationColors
 import com.daiatech.waveform.segmentation.segmentationColors
-import com.daiatech.waveform.start
 import com.daiatech.waveform.toMinSecMs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,8 +44,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
 
 
 /**
@@ -85,7 +79,7 @@ fun SegmentToolbar(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(Res.string.start),
+                text = "Start",
                 color = colors.contentPrimary
             )
             Spacer(Modifier.height(8.dp))
@@ -103,7 +97,7 @@ fun SegmentToolbar(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = pluralStringResource(Res.plurals.n_segments_added, segmentCount, segmentCount),
+                text = if (segmentCount == 1) "$segmentCount segment added" else "$segmentCount segments added",
                 color = colors.contentPrimary
             )
             Spacer(Modifier.height(8.dp))
@@ -140,7 +134,7 @@ fun SegmentToolbar(
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(Res.string.end),
+                text = "End",
                 color = colors.contentPrimary
             )
             Spacer(Modifier.height(8.dp))

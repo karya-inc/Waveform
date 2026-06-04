@@ -40,13 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.daiatech.waveform.Res
 import com.daiatech.waveform.icons.Tag
 import com.daiatech.waveform.icons.TagFilled
-import com.daiatech.waveform.open_close_tag
-import com.daiatech.waveform.standalone_tag
-import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 
 const val SHORTCUT_CHAR_1 = "{}"
 
@@ -228,7 +223,7 @@ fun TranscriptionTextEditor(
                         )
                     ) {
                         Text(
-                            text = stringResource(Res.string.standalone_tag),
+                            text = "Standalone Tag",
                             color = colors.contentColor
                         )
                     }
@@ -245,7 +240,7 @@ fun TranscriptionTextEditor(
                         )
                     ) {
                         Text(
-                            text = stringResource(Res.string.open_close_tag),
+                            text = "Open/Close Tag",
                             color = colors.contentColor
                         )
                     }
