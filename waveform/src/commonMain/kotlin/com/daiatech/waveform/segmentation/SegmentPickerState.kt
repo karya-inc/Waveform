@@ -5,6 +5,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -17,9 +18,11 @@ import com.daiatech.waveform.models.AmplitudeType
 import com.daiatech.waveform.models.Segment
 import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import kotlin.math.pow
@@ -64,9 +67,20 @@ class SegmentPickerState(
     val amplitudes: List<Int>,
     val durationMs: Long,
     val minimumSegmentDuration: Long,
-    val inactive: List<Segment>
+    val inactive: List<Segment>,
+    /**
+     * Lifecycle-bound scope used for background pre-warming of non-visible zoom
+     * levels. Cancelled when the owning composable leaves composition.
+     */
+    private val scope: CoroutineScope
 ) {
+    /**
+     * Cache of processed amplitudes per zoom level. Guarded by [storeMutex] —
+     * read/written from multiple [Dispatchers.Default] coroutines, where a
+     * plain map is not safe for concurrent access.
+     */
     private val drawableAmplitudesStore = mutableMapOf<Zoom, List<Float>>()
+    private val storeMutex = Mutex()
     private val _processing = mutableStateOf(true)
     private var _zoom = mutableStateOf(Zoom.X1)
     private val _drawableAmplitudes = mutableStateOf(listOf<Float>())
@@ -118,56 +132,61 @@ class SegmentPickerState(
      * Prioritizes current zoom, then processes others in background.
      * Uses chunking for large spike counts to prevent memory issues.
      */
-    private var processingJobs: List<Deferred<Unit>> = listOf()
     suspend fun calculateDrawableAmplitudes() = withContext(Dispatchers.Default) {
         val zoomValue = _zoom.value
-        if (drawableAmplitudesStore.containsKey(zoomValue)) {
-            _drawableAmplitudes.value = drawableAmplitudesStore[zoomValue]!!
+
+        val cached = storeMutex.withLock { drawableAmplitudesStore[zoomValue] }
+        val amps = cached ?: computeForZoom(zoomValue).also { computed ->
+            storeMutex.withLock { drawableAmplitudesStore.getOrPut(zoomValue) { computed } }
+        }
+
+        // Assign from the local — never re-read the map, never `!!`.
+        if (_zoom.value == zoomValue) {
+            _drawableAmplitudes.value = amps
             _processing.value = false
-            return@withContext
         }
-        val startMs = millisNow
-        println("SegmentPickerState:: Processing audio started at $startMs")
-        val priorityZooms = listOf(zoomValue) + Zoom.entries.filter { it != zoomValue }
-        if (processingJobs.isNotEmpty()) {
-            println("SegmentPickerState:: Already processing, returning")
-            return@withContext
+
+        prewarmOtherZoomLevels(zoomValue)
+    }
+
+    /**
+     * Pure computation of drawable amplitudes for [zoom]. Touches no shared
+     * mutable state, so it is safe to run concurrently for different zooms.
+     */
+    private suspend fun computeForZoom(zoom: Zoom): List<Float> {
+        val noOfSpikes = (
+            noOfSpikesInTwoTimestamps(zoom) * durationMs /
+                DURATION_MS_BETWEEN_TIMESTAMP
+        ).toInt()
+        val chunkSize = 5000
+        return if (noOfSpikes > chunkSize) {
+            processAmplitudesInChunks(noOfSpikes, chunkSize)
+        } else {
+            amplitudes.toDrawableAmplitudes(
+                amplitudeType = AmplitudeType.AVG,
+                spikes = noOfSpikes,
+                minHeight = MIN_SPIKE_HEIGHT,
+                maxHeight = layout.graphHeightPx
+            )
         }
-        processingJobs = priorityZooms.map { zoom ->
-            async {
-                if (!drawableAmplitudesStore.containsKey(zoom)) {
-                    println("SegmentPickerState:: Processing for $zoom level")
-                    val levelStartMs = millisNow
-                    val noOfSpikes = (
-                        noOfSpikesInTwoTimestamps(zoom) * durationMs /
-                            DURATION_MS_BETWEEN_TIMESTAMP
-                    ).toInt()
-                    val chunkSize = 5000
-                    val drawableAmps = if (noOfSpikes > chunkSize) {
-                        processAmplitudesInChunks(noOfSpikes, chunkSize)
-                    } else {
-                        amplitudes.toDrawableAmplitudes(
-                            amplitudeType = AmplitudeType.AVG,
-                            spikes = noOfSpikes,
-                            minHeight = MIN_SPIKE_HEIGHT,
-                            maxHeight = layout.graphHeightPx
-                        )
-                    }
-                    drawableAmplitudesStore[zoom] = drawableAmps
-                    val levelEndMs = millisNow
-                    println("SegmentPickerState:: Completed $zoom in ${levelEndMs - levelStartMs}ms")
+    }
+
+    /**
+     * Lazily computes the remaining zoom levels on the lifecycle-bound [scope]
+     * so switching zoom is instant after the first visit. Cancellable: when the
+     * picker leaves composition the scope is cancelled and this work stops.
+     */
+    private fun prewarmOtherZoomLevels(current: Zoom) {
+        scope.launch(Dispatchers.Default) {
+            Zoom.entries.filter { it != current }.forEach { zoom ->
+                val alreadyCached = storeMutex.withLock { drawableAmplitudesStore.containsKey(zoom) }
+                if (!alreadyCached) {
+                    val computed = computeForZoom(zoom)
+                    storeMutex.withLock { drawableAmplitudesStore.getOrPut(zoom) { computed } }
                 }
+                yield()
             }
         }
-        processingJobs.first().await()
-        _drawableAmplitudes.value = drawableAmplitudesStore[zoomValue]!!
-        _processing.value = false
-        val endMs = millisNow
-        println("SegmentPickerState:: Initial processing complete in ${endMs - startMs}ms")
-        processingJobs.drop(1)
-            .forEach { it.await() } // Continue processing other zoom levels in background
-        val finalMs = millisNow
-        println("SegmentPickerState:: All zoom levels processed in ${finalMs - startMs}ms")
     }
 
     /**
@@ -415,6 +434,7 @@ fun rememberSegmentPickerState(
     inactive: List<Segment>
 ): SegmentPickerState {
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
     return remember {
         SegmentPickerState(
             density = density,
@@ -424,7 +444,8 @@ fun rememberSegmentPickerState(
             amplitudes = amplitudes,
             durationMs = durationMs,
             minimumSegmentDuration = minimumSegmentMs,
-            inactive = inactive
+            inactive = inactive,
+            scope = scope
         )
     }
 }
