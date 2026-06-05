@@ -22,3 +22,6 @@ local.properties
 
 app/release
 .hotswan/
+
+.claude/
+/gradle/gradle-daemon-jvm.properties
