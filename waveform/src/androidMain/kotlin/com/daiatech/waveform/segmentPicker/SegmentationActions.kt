@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.daiatech.waveform.Res
 import com.daiatech.waveform.icons.ArrowLeft
 import com.daiatech.waveform.icons.ArrowRight
 import com.daiatech.waveform.icons.Pause
@@ -31,7 +30,6 @@ import com.daiatech.waveform.models.WaveformColors
 import com.daiatech.waveform.segmentation.WindowMarker
 import com.daiatech.waveform.segmentation.changeSegmentPosition
 import com.daiatech.waveform.toSecsAndMs
-import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun SegmentationActions(

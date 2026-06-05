@@ -45,7 +45,6 @@ import com.daiatech.waveform.icons.Tag
 import com.daiatech.waveform.icons.TagFilled
 import com.daiatech.waveform.open_close_tag
 import com.daiatech.waveform.standalone_tag
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 const val SHORTCUT_CHAR_1 = "{}"
