@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -19,9 +20,11 @@ import com.daiatech.waveform.segmentation.millisNow
 import com.daiatech.waveform.segmentation.noOfSpikesInTwoTimestamps
 import com.daiatech.waveform.segmentation.zoom.Zoom
 import com.daiatech.waveform.toDrawableAmplitudes
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 
@@ -32,11 +35,23 @@ class AudioPlayerState(
     spikePadding: Dp,
     val amplitudes: List<Int>,
     val durationMs: Long,
+    /**
+     * Lifecycle-bound scope used for background pre-warming of non-visible zoom
+     * levels. When the owning composable leaves composition this scope is
+     * cancelled, so pre-warm work stops instead of wasting cycles/memory.
+     */
+    private val scope: CoroutineScope,
     graphHeight: Dp = MIN_GRAPH_HEIGHT,
     verticalItemSpacing: Dp = 8.dp,
     markerFontSize: TextUnit = 12.sp,
 ) {
+    /**
+     * Cache of processed amplitudes per zoom level. Guarded by [storeMutex] —
+     * it is read/written from multiple [Dispatchers.Default] coroutines and a
+     * plain map is not safe for concurrent access.
+     */
     private val drawableAmplitudesStore = mutableMapOf<Zoom, List<Float>>()
+    private val storeMutex = Mutex()
     private val _processing = mutableStateOf(true)
     private val _zoom = mutableStateOf(Zoom.X1)
     private val _drawableAmplitudes = mutableStateOf(listOf<Float>())
@@ -70,56 +85,75 @@ class AudioPlayerState(
     val processing: State<Boolean> = _processing
     val drawableAmplitudes: State<List<Float>> = _drawableAmplitudes
 
-    private var processingJobs: List<Deferred<Unit>> = listOf()
-
+    /**
+     * Computes the drawable amplitudes for the currently selected zoom level,
+     * publishes them to [drawableAmplitudes], then pre-warms the remaining zoom
+     * levels in the background.
+     *
+     * Correctness comes from the cache + [storeMutex], not from a re-entry flag:
+     * - The store is only ever touched under the mutex, so concurrent callers
+     *   on [Dispatchers.Default] can never observe a torn map (the original
+     *   cause of the `NullPointerException` at the map read).
+     * - The visible zoom is computed into a local and assigned from that local,
+     *   so the published value can never be null regardless of how the
+     *   background pre-warm interleaves.
+     * - If the user changes zoom while we compute, we skip the stale assignment.
+     */
     suspend fun calculateDrawableAmplitudes() = withContext(Dispatchers.Default) {
         val zoomValue = _zoom.value
-        if (drawableAmplitudesStore.containsKey(zoomValue)) {
-            _drawableAmplitudes.value = drawableAmplitudesStore[zoomValue]!!
+
+        val cached = storeMutex.withLock { drawableAmplitudesStore[zoomValue] }
+        val amps = cached ?: computeForZoom(zoomValue).also { computed ->
+            storeMutex.withLock { drawableAmplitudesStore.getOrPut(zoomValue) { computed } }
+        }
+
+        // Assign from the local — never re-read the map, never `!!`.
+        if (_zoom.value == zoomValue) {
+            _drawableAmplitudes.value = amps
             _processing.value = false
-            return@withContext
         }
-        val startMs = millisNow
-        println("AudioPlayerState:: Processing audio started at $startMs")
-        val priorityZooms = listOf(zoomValue) + Zoom.entries.filter { it != zoomValue }
-        if (processingJobs.isNotEmpty()) {
-            println("AudioPlayerState:: Already processing, returning")
-            return@withContext
+
+        prewarmOtherZoomLevels(zoomValue)
+    }
+
+    /**
+     * Pure computation of drawable amplitudes for [zoom]. Touches no shared
+     * mutable state, so it is safe to run concurrently for different zooms.
+     */
+    private suspend fun computeForZoom(zoom: Zoom): List<Float> {
+        val noOfSpikes = (
+            noOfSpikesInTwoTimestamps(zoom) * durationMs /
+                DURATION_MS_BETWEEN_TIMESTAMP
+        ).toInt()
+        val chunkSize = 5000
+        return if (noOfSpikes > chunkSize) {
+            processAmplitudesInChunks(noOfSpikes, chunkSize)
+        } else {
+            amplitudes.toDrawableAmplitudes(
+                amplitudeType = AmplitudeType.AVG,
+                spikes = noOfSpikes,
+                minHeight = MIN_SPIKE_HEIGHT,
+                maxHeight = layout.graphHeightPx
+            )
         }
-        processingJobs = priorityZooms.map { zoom ->
-            async {
-                if (!drawableAmplitudesStore.containsKey(zoom)) {
-                    println("AudioPlayerState:: Processing for $zoom level")
-                    val levelStartMs = millisNow
-                    val noOfSpikes = (
-                        noOfSpikesInTwoTimestamps(zoom) * durationMs /
-                            DURATION_MS_BETWEEN_TIMESTAMP
-                    ).toInt()
-                    val chunkSize = 5000
-                    val drawableAmps = if (noOfSpikes > chunkSize) {
-                        processAmplitudesInChunks(noOfSpikes, chunkSize)
-                    } else {
-                        amplitudes.toDrawableAmplitudes(
-                            amplitudeType = AmplitudeType.AVG,
-                            spikes = noOfSpikes,
-                            minHeight = MIN_SPIKE_HEIGHT,
-                            maxHeight = layout.graphHeightPx
-                        )
-                    }
-                    drawableAmplitudesStore[zoom] = drawableAmps
-                    val levelEndMs = millisNow
-                    println("AudioPlayerState:: Completed $zoom in ${levelEndMs - levelStartMs}ms")
+    }
+
+    /**
+     * Lazily computes the remaining zoom levels on the lifecycle-bound [scope]
+     * so switching zoom is instant after the first visit. Cancellable: when the
+     * player leaves composition the scope is cancelled and this work stops.
+     */
+    private fun prewarmOtherZoomLevels(current: Zoom) {
+        scope.launch(Dispatchers.Default) {
+            Zoom.entries.filter { it != current }.forEach { zoom ->
+                val alreadyCached = storeMutex.withLock { drawableAmplitudesStore.containsKey(zoom) }
+                if (!alreadyCached) {
+                    val computed = computeForZoom(zoom)
+                    storeMutex.withLock { drawableAmplitudesStore.getOrPut(zoom) { computed } }
                 }
+                yield()
             }
         }
-        processingJobs.first().await()
-        _drawableAmplitudes.value = drawableAmplitudesStore[zoomValue]!!
-        _processing.value = false
-        val endMs = millisNow
-        println("AudioPlayerState:: Initial processing complete in ${endMs - startMs}ms")
-        processingJobs.drop(1).forEach { it.await() }
-        val finalMs = millisNow
-        println("AudioPlayerState:: All zoom levels processed in ${finalMs - startMs}ms")
     }
 
     private suspend fun processAmplitudesInChunks(
@@ -187,6 +221,7 @@ fun rememberAudioPlayerState(
 ): AudioPlayerState {
     val density = LocalDensity.current
     val dimensions = LocalAudioPlayerDimensions.current
+    val scope = rememberCoroutineScope()
     return remember {
         AudioPlayerState(
             density = density,
@@ -195,6 +230,7 @@ fun rememberAudioPlayerState(
             spikePadding = 2.dp,
             amplitudes = amplitudes,
             durationMs = durationMs,
+            scope = scope,
             graphHeight = dimensions.graphHeight,
             verticalItemSpacing = dimensions.verticalItemSpacing,
             markerFontSize = dimensions.markerFontSize,

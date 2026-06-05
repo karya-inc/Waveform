@@ -135,6 +135,7 @@ private fun ToolbarPreviewScaffold(
     content: @Composable (state: AudioPlayerState) -> Unit,
 ) {
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
     ProvidePlayerDimensions(dimensions) {
         val state = remember {
             AudioPlayerState(
@@ -144,6 +145,7 @@ private fun ToolbarPreviewScaffold(
                 spikePadding = 2.dp,
                 amplitudes = listOf(100, 200, 300, 500, 100, 20).times(20),
                 durationMs = 8000L,
+                scope = scope,
                 graphHeight = dimensions.graphHeight,
                 verticalItemSpacing = dimensions.verticalItemSpacing,
                 markerFontSize = dimensions.markerFontSize,
