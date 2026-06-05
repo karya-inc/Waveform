@@ -16,6 +16,7 @@ kotlin {
         namespace = "com.daiatech.waveform"
         compileSdk { version = release(36) }
         minSdk = 21
+        experimentalProperties["android.experimental.kmp.enableAndroidResources"] = true
     }
 
     jvm()
